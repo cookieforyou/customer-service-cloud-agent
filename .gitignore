@@ -1,0 +1,12 @@
+.idea
+.vscode
+.claude
+target
+logs
+dist
+node_modules
+.env
+.env.docker
+.env.local
+.env.production
+__pycache__
