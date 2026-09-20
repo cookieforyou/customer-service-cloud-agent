@@ -65,10 +65,11 @@ public class Session {
     protected Session() {
     }
 
-    public Session(UUID id, String tenantId, String channel, String state, Instant now) {
+    public Session(UUID id, String tenantId, String channel, String visitorId, String state, Instant now) {
         this.id = id;
         this.tenantId = tenantId;
         this.channel = channel;
+        this.visitorId = visitorId;
         this.state = state;
         this.createdAt = now;
         this.lastActiveAt = now;

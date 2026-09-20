@@ -25,6 +25,7 @@
     <spring-modulith.version>2.1.1</spring-modulith.version>
     <archunit.version>1.5.0</archunit.version>
     <testcontainers.version>2.0.5</testcontainers.version>
+    <redisson.version>4.6.1</redisson.version>
   </properties>
 
   <modules>
@@ -70,6 +71,11 @@
         <artifactId>archunit-junit5</artifactId>
         <version>${archunit.version}</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.redisson</groupId>
+        <artifactId>redisson-spring-boot-starter</artifactId>
+        <version>${redisson.version}</version>
       </dependency>
 
       <!-- 内部模块统一版本（《02》§8：版本集中根 POM，子模块禁止自声明） -->

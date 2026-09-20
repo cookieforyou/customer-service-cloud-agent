@@ -28,9 +28,9 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 | 0.2 | ArchUnit 六规则（《02》§6） | cs-api(test) | 违规=CI 失败；故意注入违规可红 | ✅ 2026-09-20 M0批1：六规则落地；实证注入 R2 违规（channel→conversation.domain）被拦（2 violations）后回滚复验全绿；r3/r6 骨架期 `allowEmptyShould(true)`（api/app 包尚无类，护栏随代码生长生效）；另实证 Maven 依赖图为第一道闸（无依赖时编译期即拦） |
 | 0.3 | CI 流水线四阶段 | — | PR 全链自动执行 | ✅ 2026-09-20 M0批1：`.github/workflows/ci.yml` 三 job（build→test(unit+arch)→integration），JDK 25 temurin + maven cache；eval/redteam 接入点注释挂 M1批6/M3。注：PR 自动触发依赖远端仓库托管，配置就绪待远端启用 |
 | 0.4 | Flyway 基线 + RLS | cs-domain | 迁移可重放；跨租户查询被 RLS 拦截的集成测试 | ✅ 2026-09-20 M0批2：V1（三表+索引+唯一键+RLS ENABLE/FORCE+fail-closed 策略）+ V2（cs_app 执行角色+授权+默认权限）；实体三/仓储三（Hibernate validate 过，jsonb 字段 @JdbcTypeCode(SqlTypes.JSON)）；集成测试 2/2 绿——RLS 四场景实证（跨租户读 0 行/点名 0 行/越租户写拒/无上下文写拒 + 管理连接对照可见）；全装配冒烟含真实 PG 迁移；坑#13（TC 2.x 形态三变化）/坑#14（嵌套 JdbcTemplate 连接不一致）登记《15》。注：Redisson 装配与业务使用随 M0批3（幂等）接入，本批键常量收敛（RedisKeys）。迁移落位/RLS 执行形态回写《12》v1.2.0 |
-| 0.5 | Casdoor JWT 资源服务 + 三身份 | cs-api | 访客/坐席/服务 token 分别过/拒 | |
-| 0.6 | webchat 渠道 + SSE 帧协议 v1 | cs-channel | ACK/TOKEN/DONE/ERROR 帧可收；断线 Last-Event-ID 补发 | |
-| 0.7 | 入站幂等去重 + 访客限流 | cs-channel | 同 channel_msg_id 重放只产生一轮 | |
+| 0.5 | Casdoor JWT 资源服务 + 三身份 | cs-api | 访客/坐席/服务 token 分别过/拒 | ✅ 2026-09-20 M0批3：双 issuer 资源服务器（Casdoor + 平台自签访签 `urn:csca:visitor`）；访客=appKey+HMAC 验签换发（scope=cs.webchat→ROLE_VISITOR），坐席=Casdoor roles→ROLE_*（AGENT 无 chat 权 403 实证）；无 token 401 实证。回写《11》§7 v1.2.0（访签平台自签定案） |
+| 0.6 | webchat 渠道 + SSE 帧协议 v1 | cs-channel | ACK/TOKEN/DONE/ERROR 帧可收；断线 Last-Event-ID 补发 | ✅ 2026-09-20 M0批3：visitor-tokens/sessions/messages/stream 四端点 + 帧总线（directBestEffort 热流 + 256 内存补发缓冲，Last-Event-ID 头 + query 降级）；全链集成测试实证 TOKEN×N+DONE、序号单调、id>afterId 精确补发；MVC 返回 Flux（V-03 实证可用，心跳挂 M0批5）。偏离注记：缓冲 Redis 化随多实例（M0批5 复审），回写《08》v1.1.0 |
+| 0.7 | 入站幂等去重 + 访客限流 | cs-channel | 同 channel_msg_id 重放只产生一轮 | ✅ 2026-09-20 M0批3：双闸实证——Redis SETNX/回执缓存路径 + 清 Redis 后 DB 唯键兜底路径（冲突事务滚出后新事务补偿读，坑#18）均 duplicate=true 且 messageId 一致；限流 RPM=3 实证第 4 次 429 RATE_LIMITED |
 | 0.8 | main_supervisor 最小链路 | cs-orchestration/ai-core | 消息→T1→SSE 全通；turn/message/event 落库 | |
 | 0.9 | 观测出数 | cs-api | Jaeger 可见 chat span；Prometheus 抓到 cs_* 指标 | |
 | 0.10 | V-01~V-03 核验回写 | — | 《01》§7 状态更新 + 修订注记 | |

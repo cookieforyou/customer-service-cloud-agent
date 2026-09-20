@@ -1,6 +1,6 @@
 # 08 · 渠道接入层
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-07/D-12/D-13，《03》幂等。
+> 最后更新:2026-09-20 · v1.1.0(M0批3：sign 算法定案/SSE 补发内存缓冲偏离注记/lastEventId query 降级) · v1.0.0(初版) ｜ 依赖《01》D-07/D-12/D-13，《03》幂等
 
 ## 1. ChannelAdapter SPI
 
@@ -27,10 +27,12 @@ public interface ChannelAdapter {
 ## 3. 入站处理管线（webchat 为例）
 
 ```
-验签(appKey+timestamp+sign, ±5min) → 访客JWT校验 → 幂等((tenant,channel,msgId) Redis SETNX 30s + DB 唯一键兜底)
+验签(appKey+timestamp+sign, ±5min) → 访客JWT校验 → 幂等((tenant,channel,msgId) Redis SETNX 30s 前置 + DB 唯一键兜底（冲突事务回滚后新事务补偿读）)
   → 限流(per-visitor RPM 20 / per-tenant RPM+TPM) → 归一化(附件→引用) → 会话域投递
   → 立即回 ACK 帧（含 turnId），应答走 SSE 异步
 ```
+
+sign 算法（M0批3 定案）：`sign = HMAC-SHA256(appSecret, appKey + "\n" + timestamp)`，timestamp 为毫秒，窗口 ±5min，常量时间比较。
 
 ## 4. SSE 帧协议 v1（本平台权威帧族）
 
@@ -53,7 +55,7 @@ openapi 渠道不使用帧协议，返回 `{answer, turnId, refs[], toolCalls[],
 
 ## 5. 断线重连与补发
 
-- 客户端带 `Last-Event-ID` 重连；服务端从 ring buffer（`cs:sse:buffer:{sessionTurnId}`，容量 256 帧，TTL 5min，见《03》§6）补发其后帧；越界（buffer 已淘汰）则回放当前 turn 的 `MESSAGE` 全帧 + 提示。
+- 客户端带 `Last-Event-ID` 重连；服务端从补发缓冲回放其后帧。**M0批3 落地形态**：缓冲为单实例内存 ring buffer（≤256 帧，会话级；`directBestEffort` 热流不存历史，缓冲是补发唯一来源，慢消费者丢帧由重连恢复）；**偏离注记**：《12》§3 设计为 Redis List——Redis 化随多实例部署形态落地（M0批5 复审）。EventSource 无法自定义头，补发同时支持 `?lastEventId=` query 降级。
 - 转人工段：WebSocket（坐席台）/ webchat 用户侧仍走 SSE（坐席消息经 `MESSAGE` 帧下发），单向流对用户端足够。
 
 ## 6. 限流与背压（LLM10 缓解）

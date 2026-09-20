@@ -62,12 +62,13 @@ class ConversationPersistenceIntegrationTest {
     @Test
     void jpaRoundTripAndIdempotencyKey() {
         UUID sessionId = UUID.randomUUID();
-        sessions.saveAndFlush(new Session(sessionId, "t-a", "webchat", "ACTIVE", Instant.now()));
+        sessions.saveAndFlush(new Session(sessionId, "t-a", "webchat", "v-a", "ACTIVE", Instant.now()));
 
         assertThat(sessions.findById(sessionId))
                 .hasValueSatisfying(s -> {
                     assertThat(s.getTenantId()).isEqualTo("t-a");
                     assertThat(s.getChannel()).isEqualTo("webchat");
+                    assertThat(s.getVisitorId()).isEqualTo("v-a");
                 });
         assertThat(messages.existsByTenantIdAndChannelAndChannelMsgId("t-a", "webchat", "m-1")).isFalse();
 

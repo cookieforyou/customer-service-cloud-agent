@@ -11,4 +11,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     boolean existsByTenantIdAndChannelAndChannelMsgId(String tenantId, String channel, String channelMsgId);
 
     Optional<Message> findByTenantIdAndChannelAndChannelMsgId(String tenantId, String channel, String channelMsgId);
+
+    Optional<Message> findFirstBySessionIdOrderBySeqDesc(UUID sessionId);
 }

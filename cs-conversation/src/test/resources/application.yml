@@ -1,4 +1,9 @@
 spring:
+  # 本模块测试不涉及 Redis：排除 Redisson 传递自动装配（cs-infra 依赖引入）
+  autoconfigure:
+    exclude:
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+      - org.redisson.spring.starter.RedissonAutoConfigurationV4
   jpa:
     hibernate:
       ddl-auto: validate   # Schema 唯一来源 = Flyway（V1/V2），Hibernate 仅校验

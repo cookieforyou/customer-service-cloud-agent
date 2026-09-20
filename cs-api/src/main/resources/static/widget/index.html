@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSCA Webchat Widget（M0批3 测试版）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
+    fieldset { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px; }
+    .row { margin: 6px 0; }
+    input { width: 320px; max-width: 100%; }
+    #log { border: 1px solid #ddd; border-radius: 8px; padding: 8px; height: 320px; overflow-y: auto; background: #fafafa; font-size: 13px; }
+    .frame { margin: 2px 0; }
+    .TOKEN { color: #065fd4; }
+    .MESSAGE { color: #0b6623; }
+    .DONE { color: #888; font-weight: bold; }
+    .ERROR { color: #c00; font-weight: bold; }
+    button { margin-right: 6px; }
+  </style>
+</head>
+<body>
+<h3>CSCA Webchat Widget <span style="font-size:12px;color:#888">（M0批3 测试版 · echo 引擎 · 本回答由 AI 提供）</span></h3>
+
+<fieldset>
+  <legend>1. 站点接入（appKey + HMAC 验签换访客令牌）</legend>
+  <div class="row">appKey <input id="appKey" value="demo-app"> secret <input id="appSecret" value="demo-secret" type="password"></div>
+  <button onclick="getToken()">换发访客令牌</button> <span id="tokenState"></span>
+</fieldset>
+
+<fieldset>
+  <legend>2. 会话</legend>
+  <button onclick="openSession()">开会话</button> sessionId: <code id="sessionId">-</code>
+</fieldset>
+
+<fieldset>
+  <legend>3. 消息（SSE 帧流）</legend>
+  <div class="row">
+    <input id="text" value="你好，请介绍一下退货政策" onkeydown="if(event.key==='Enter')send()">
+    <button onclick="send()">发送</button>
+    <button onclick="replay()">断线补发（Last-Event-ID=<span id="lastId">0</span>）</button>
+  </div>
+  <div id="log"></div>
+</fieldset>
+
+<script type="module">
+  const state = { token: null, sessionId: null, lastFrameId: 0, es: null, msgSeq: 0 };
+
+  async function api(path, method, body) {
+    const res = await fetch('/api/v1/chat' + path, {
+      method: method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(state.token ? { Authorization: 'Bearer ' + state.token } : {})
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const json = await res.json().catch(() => ({}));
+    return { status: res.status, body: json };
+  }
+
+  async function hmacHex(secret, payload) {
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+    return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  window.getToken = async function () {
+    const appKey = document.getElementById('appKey').value.trim();
+    const secret = document.getElementById('appSecret').value.trim();
+    const ts = Date.now();
+    const sign = await hmacHex(secret, appKey + '\n' + ts);
+    const r = await api('/visitor-tokens', 'POST', { appKey, timestamp: ts, sign });
+    const el = document.getElementById('tokenState');
+    if (r.status === 200) {
+      state.token = r.body.data.token;
+      el.textContent = '✅ visitorId=' + r.body.data.visitorId + '（有效期 ' + r.body.data.expiresInSeconds + 's）';
+    } else {
+      el.textContent = '❌ ' + r.status + ' ' + (r.body.code || '') + ' ' + (r.body.message || '');
+    }
+  };
+
+  window.openSession = async function () {
+    const r = await api('/sessions', 'POST');
+    if (r.status === 200) {
+      state.sessionId = r.body.data.sessionId;
+      document.getElementById('sessionId').textContent = state.sessionId;
+      openStream(0);
+    } else {
+      document.getElementById('sessionId').textContent = '❌ ' + r.status + ' ' + (r.body.code || '');
+    }
+  };
+
+  window.send = async function () {
+    if (!state.sessionId) { alert('先开会话'); return; }
+    const text = document.getElementById('text').value;
+    const channelMsgId = 'w-' + Date.now() + '-' + (++state.msgSeq);
+    const r = await api('/sessions/' + state.sessionId + '/messages', 'POST', { text, channelMsgId });
+    log('ACK', JSON.stringify(r.body));
+  };
+
+  function openStream(afterId) {
+    if (state.es) { state.es.close(); state.es = null; }
+    const url = '/api/v1/chat/sessions/' + state.sessionId + '/stream'
+      + (afterId ? '?lastEventId=' + afterId : '');
+    const es = new EventSource(url);
+    state.es = es;
+    ['TOKEN', 'MESSAGE', 'TOOL', 'TRACE', 'ESCALATION', 'CSAT', 'DONE', 'ERROR'].forEach(ev =>
+      es.addEventListener(ev, e => {
+        if (e.lastEventId) {
+          state.lastFrameId = Number(e.lastEventId);
+          document.getElementById('lastId').textContent = state.lastFrameId;
+        }
+        log(ev, e.data);
+      }));
+    es.onerror = () => { /* 浏览器自动重连将带 Last-Event-ID 头 */ };
+  }
+
+  window.replay = function () {
+    if (!state.sessionId) { alert('先开会话'); return; }
+    openStream(state.lastFrameId);
+    log('SYS', '以 lastEventId=' + state.lastFrameId + ' 重连，等待补发帧…');
+  };
+
+  function log(event, data) {
+    const line = document.createElement('div');
+    line.className = 'frame ' + event;
+    line.textContent = '[' + event + '] ' + data;
+    document.getElementById('log').appendChild(line);
+    document.getElementById('log').scrollTop = 1e9;
+  }
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # 11 · 安全与合规
 
-> 最后更新:2026-09-20 · v1.1.0(终审：eval 端点访问面收紧 + 个人信息主体权利条款) · v1.0.0(初版) ｜ 依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链
+> 最后更新:2026-09-20 · v1.2.0(M0批3：访客 JWT 平台自签定案与双 issuer 资源服务器落地) · v1.1.0(终审：eval 端点访问面收紧 + 个人信息主体权利条款) · v1.0.0(初版) ｜ 依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链
 
 ## 1. 威胁模型：OWASP Top 10 for LLM Applications 2025 → 客服场景映射
 
@@ -65,6 +65,7 @@
 ## 7. 认证与授权（D-12）
 
 - 身份源：Casdoor（OAuth2/OIDC）。四类主体：终端用户（webchat 访客 JWT→可绑定业务账号）、坐席/管理员（RBAC：`AGENT/SUPERVISOR/ADMIN/SUPER_ADMIN`）、服务（client_credentials）、远端 Agent（A2A 调用方，scope 治理）。
+- **访客 JWT 落地形态（M0批3 定案）**：Casdoor 不承载匿名访客签发——访客令牌由**平台自签**（RS256，issuer `urn:csca:visitor`，TTL 24h，claims：sub=visitorId、owner=站点租户、scope=cs.webchat）；换发前置校验 = 站点 appKey + 时间戳（±5min）+ `HMAC-SHA256(appSecret, appKey + "\n" + timestamp)`（常量时间比较）。资源服务器为**双 issuer**（`JwtIssuerAuthenticationManagerResolver`）：Casdoor（坐席/服务/管理员，JWKS 或 PEM）+ 平台访签；授权面 `cs.webchat` scope → ROLE_VISITOR，Casdoor `roles` claim → ROLE_*。访客密钥对经环境注入（PEM），未配置时仅 dev/sit 生成临时密钥（启动 WARN）。
 - 服务间（MCP/A2A）：JWT fail-closed 三层（有效性→身份 claim 完整性→可选 scope），对齐知识服务 `McpIdentityGuard` 已验证形态；本平台作为 MCP client 调 KB 用服务身份 + 会话租户透传（`ToolContext`）。
 - API 面：`/api/v1/chat/**`（访客 JWT）、`/api/v1/agent-console/**`（坐席）、`/api/v1/admin/**`（管理员，审计敏感操作二次确认）、`/a2a`+`/.well-known/agent-card.json`（JWT，不匿名公开——对齐知识服务纪律）、`/api/v1/eval/**`（**服务身份，仅 sit/内网可达，禁公网暴露**——评测端点可钉 Agent/prompt 版本，属高权限面）。
 

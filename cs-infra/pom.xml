@@ -28,5 +28,10 @@
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <!-- Redis（Redisson，版本根 POM 钉板 4.6.1——姊妹项目 Boot 4.1 实证同款，M0批3 幂等/限流启用） -->
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+    </dependency>
   </dependencies>
 </project>

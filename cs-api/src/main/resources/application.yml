@@ -2,7 +2,7 @@ spring:
   application:
     name: cs-api
 
-  # PG 直连 ECS 既有实例（环境注入；本地/Testcontainers 场景由 @ServiceConnection 覆盖）
+  # PG 直连 ECS 既有原生实例（环境注入；本地/Testcontainers 场景由 @ServiceConnection 覆盖）
   datasource:
     url: ${CS_DB_URL:jdbc:postgresql://localhost:5432/cs_dev}
     username: ${CS_DB_USER:cs_dev}
@@ -15,6 +15,34 @@ spring:
 
   flyway:
     enabled: true          # 迁移唯一落位 cs-infra: classpath:db/migration（《12》§2 落位约定）
+
+  data:
+    redis:
+      host: ${CS_REDIS_HOST:localhost}
+      port: ${CS_REDIS_PORT:6379}
+
+cs:
+  auth:
+    casdoor:               # 坐席/服务/管理员身份（《11》§7）；jwk-set-uri 与 public-key-pem 二选一，均空则该 issuer 不启用
+      issuer: ${CS_AUTH_CASDOOR_ISSUER:urn:casdoor:default}
+      jwk-set-uri: ${CS_AUTH_CASDOOR_JWKS:}
+      public-key-pem: ${CS_AUTH_CASDOOR_PEM:}
+    visitor:               # 平台自签访客身份（《11》§7 v1.2.0）；PEM 未配置时生成临时密钥（仅 dev/sit）
+      issuer: ${CS_AUTH_VISITOR_ISSUER:urn:csca:visitor}
+      public-key-pem: ${CS_AUTH_VISITOR_PUB_PEM:}
+      private-key-pem: ${CS_AUTH_VISITOR_PRIV_PEM:}
+      ttl: 24h
+  channel:
+    turn-engine: ${CS_TURN_ENGINE:echo}   # M0批4 起切 orchestration
+    webchat:
+      sign-window: 5m
+      apps:
+        - app-key: ${CS_WEBCHAT_APP_KEY:demo-app}
+          secret: ${CS_WEBCHAT_APP_SECRET:demo-secret}   # 生产必经环境注入
+          tenant-id: ${CS_WEBCHAT_TENANT:demo-tenant}
+    limits:
+      visitor-rpm: ${CS_LIMIT_VISITOR_RPM:20}
+      visitor-rpd: ${CS_LIMIT_VISITOR_RPD:200}
 
 server:
   # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8，部署形态 M0批5 落地）

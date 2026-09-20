@@ -10,4 +10,41 @@
   </parent>
   <artifactId>cs-channel</artifactId>
   <name>CSCA :: channel</name>
+  <description>渠道接入——ChannelAdapter SPI、webchat 适配器、SSE 帧协议 v1、幂等与限流</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-infra</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-conversation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <!-- Flux/SSE（MVC 响应式返回，V-03 实证点） -->
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
+    <!-- Jwt 类型（@AuthenticationPrincipal）与 Nimbus（访客令牌签发） -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-oauth2-jose</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

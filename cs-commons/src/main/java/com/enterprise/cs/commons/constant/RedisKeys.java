@@ -34,4 +34,14 @@ public final class RedisKeys {
     public static String sseBuffer(String sessionTurnId) {
         return "cs:sse:buffer:" + sessionTurnId;
     }
+
+    /** 访客分钟级限流计数：cs:ratelimit:visitor:{visitorId}:m:{yyyyMMddHHmm}（《08》§6）。 */
+    public static String rateVisitorMinute(String visitorId, String minute) {
+        return "cs:ratelimit:visitor:" + visitorId + ":m:" + minute;
+    }
+
+    /** 访客日级限流计数：cs:ratelimit:visitor:{visitorId}:d:{yyyyMMdd}（《08》§6）。 */
+    public static String rateVisitorDay(String visitorId, String day) {
+        return "cs:ratelimit:visitor:" + visitorId + ":d:" + day;
+    }
 }
