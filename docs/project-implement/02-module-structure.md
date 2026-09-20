@@ -77,6 +77,7 @@ cs-admin ─→ 各模块 api（只读/配置类操作为主）
 ## 5. 模块间通信
 
 ### 5.1 同步：api 接口
+
 跨模块同步调用只走 api 包中的接口（如 `cs-knowledge` 暴露 `KnowledgePort.search(SearchCommand)`），实现类在模块内部。超时与降级在**调用方**声明（如编排调知识通道 30s 超时 + 熔断）。
 
 ### 5.2 异步：领域事件（Spring Modulith 事件发布注册表）

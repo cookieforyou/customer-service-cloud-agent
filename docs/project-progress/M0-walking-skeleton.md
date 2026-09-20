@@ -3,9 +3,11 @@
 > 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：⬜ 未启动
 
 ## 1. 目标与范围
+
 最小端到端打通（Widget 发消息 → supervisor 直连 T1 生成 → SSE 回流），验证全部技术基座选型与工程骨架；不含护栏/路由/知识集成（M1+）。
 
 ## 2. 前置依赖（用户侧）
+
 INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单）；INF-2 Casdoor 应用注册。ECS 既有 PG/Redis/ES/Milvus/Neo4j 直接复用（Testcontainers 为主，远端仅冒烟）。
 
 ## 3. 批次规划（2026-09-20 定案，可经复盘调整）
@@ -34,9 +36,11 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 | 0.10 | V-01~V-03 核验回写 | — | 《01》§7 状态更新 + 修订注记 | |
 
 ## 5. 决策点
+
 （暂无待拍板项；产生即按「选项表+定案记录」格式追加）
 
 ## 6. 验收标准（里程碑 DoD）
+
 1. Widget→SSE 全链通，trace/指标可见；2. ArchUnit/测试门禁 CI 强制；3. V-01~V-03 核验结论回写；4. E2E-M0-1 用户回传销账；5. 复盘提案入 project-optimization（M1 批次定案依据）。
 
 ## 7. E2E 与热修记录

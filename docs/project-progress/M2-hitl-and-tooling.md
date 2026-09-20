@@ -3,9 +3,11 @@
 > 对应设计：《14》§1-M2、《06》工具治理、《07》HITL、《04》§6 A2A、《09》§4-§5 ｜ 状态：⬜ 未启动
 
 ## 1. 目标与范围
+
 人机协同全流程（转人工/队列/工作台/copilot/审批）+ 工具中心 L0-L2 治理 + 在线 judge v1 + prompt canary + A2A server 落地。
 
 ## 2. 前置依赖（用户侧）
+
 坐席测试账号（Casdoor 坐席角色 ≥3，用于并发分配验证）；KB A2A 端点连通性（备用通道联调）。
 
 ## 3. 批次规划（2026-09-20 定案，可经复盘调整）
@@ -39,13 +41,16 @@
 ## 5. 决策点（预置，按需拍板）
 
 ### D-M2-1 A2A server 实现形态（对应总 ADR D-06 / V-04）
+
 | 选项 | 形态 | 依据 |
 |---|---|---|
 | **A（预设推荐）** | 自研协议层（Controller+IdentityGuard+RateLimiter+AuditRecorder，契约对齐 KB 服务集成指南） | 姊妹项目同栈已 spike 判负 a2a-java SDK 桥接（Quarkus/CDI 绑定不适配 Spring），自研形态已上线验证；本平台同为 Spring 栈 |
 | B | `spring-ai-community/spring-ai-a2a` 自动装配 | 官方社区背书、装配省力；但孵化中（47★）、鉴权/超时可控性待证 |
+
 > 定案记录：待 M2 批6 首步 spike 后拍板（B 过判据则用 B，败则回落 A——回落路径已具备完整参照）。
 
 ## 6. 验收标准（里程碑 DoD）
+
 1. 转人工 E2E（触发→排队→接起→copilot→wrap-up→口径落档）销账；2. L2 审批链销账（含 REJECT 分支）；3. judge 一致率报告产出；4. canary 切流+回退演练；5. A2A 端到端（外部调用方视角）销账；6. 复盘提案入 optimization。
 
 ## 7. E2E 与热修记录

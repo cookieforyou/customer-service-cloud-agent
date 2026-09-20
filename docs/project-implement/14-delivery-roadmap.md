@@ -16,23 +16,28 @@
 ## 1. 里程碑
 
 ### M0 · Walking Skeleton（周 1–2）
+
 **目标**：最小端到端打通，验证全部技术基座选型。
 - 交付：Maven 多模块骨架 + ArchUnit 规则生效；PG Flyway 基线（会话三表）；Casdoor JWT 接入；webchat 渠道（REST+SSE 帧 v1）；单 `main_supervisor` Agent（硬编码 prompt）+ T1 模型直连；OTel→Jaeger/指标出数；CI 流水线（build/unit/arch/integration）。
 - 验收（DoD）：Widget 发消息→SSE 收 TOKEN/DONE 全链通；trace 在 Jaeger 可见；ArchUnit/测试门禁在 CI 强制；V-01~V-03 核验结论回写本文档修订注记。
 
 ### M1 · 核心问答闭环（周 3–6）
+
 - 交付：会话状态机+事件溯源+上下文组装（含摘要）；意图路由 L1+L2；`faq_agent`（Milvus `cs_faq` + 种子 FAQ）；`knowledge_agent`（MCP 主通道 + 熔断降级）；Advisor 链 v1（InputModeration/PiiIn/OutputModeration 流式分段）；语义缓存；审计 v1（append-only+hash 链）；Langfuse 部署+接入（含 ObservationFilter）；golden set 200 + promptfoo CI 门禁；指标族与告警初版。
 - 验收：知识类问题经 KB 引用可溯（TRACE 帧）；KB 故障演练（停 KB，验证降级话术+告警）；golden set 门禁在 CI 阻塞违规 PR；首 token P95 ≤2s（sit 压测脚本）。
 
 ### M2 · 人机协同与工具治理（周 7–10）
+
 - 交付：坐席域全流程（技能组队列/分配算法/坐席工作台 WebSocket/copilot 三能力）；转人工触发矩阵；warm handoff；工具中心（注册表/L0-L2/配额）；Mock 三工具；L2 审批全链；`transaction_agent` + Chain 模式；在线 judge v1（5 维度+抽样+Scores 回写）+ 校准流程；prompt canary（Langfuse label）；A2A spike→server 落地（二选一路径决策回写《04》§6.1）。
 - 验收：转人工 E2E（触发→排队→接起→copilot→wrap-up→口径落档）；L2 审批坐席批完整 payload 才可执行；judge 一致率报告（≥80% 或列入人工标注阶段）；canary 切流回退演练。
 
 ### M3 · 平台化与合规门禁（周 11–14）
+
 - 交付：多租户配置覆盖与配额计量；ToolSearchAdvisor（工具 ≥10 时）；知识缺口闭环（信号→ES 聚集→admin 队列→出口回流）；合规题库门禁全绿上线；`cs-admin` 管理后台 API（Agent/工具/FAQ/审计/缺口/看板）；openapi 渠道；Neo4j 缺口聚类（可选）；性能压测（cs-loadtest：常规/峰值/知识故障三场景）。
 - 验收：合规模块三指标达标（拒答 ≥95%/误拒 ≤5%/抽检 ≥90%）；压测报告达标（NFR 表）；缺口闭环演示（badcase→FAQ→golden set 回归通过）。
 
 ### M4 · 上线加固（周 15–16）
+
 - 交付：四场景故障演练（模型全熔断/KB 不可用/Langfuse 不可用/Redis 故障）；**备份恢复演练 DR-5（PG 全量+WAL 恢复到时间点，《12》§7）**；容量与扩容预案落档；发布与回滚手册；安全渗透 checklist 复测；运行手册（SOP：值班/告警响应/审计导出）。
 - 验收：演练记录 + 预案评审通过；正式灰度上线（canary 10%→100%）。
 
