@@ -153,6 +153,13 @@ public class ConversationService implements ConversationPort {
     private void appendEvent(Session session, String eventType, String payloadJson) {
         int seq = events.findFirstBySessionIdOrderBySeqDesc(session.getId())
                 .map(SessionEvent::getSeq).orElse(0) + 1;
-        events.save(new SessionEvent(UUID.randomUUID(), session.getId(), seq, eventType, payloadJson, Instant.now()));
+        events.save(new SessionEvent(UUID.randomUUID(), session.getId(), seq, eventType, payloadJson,
+                currentTraceId(), Instant.now()));
+    }
+
+    /** 事件 trace_id 回填（M0批5，《10》§2）：调用线程的当前 span（chat.turn Observation 同线程直达）；无 span 为 null。 */
+    private static String currentTraceId() {
+        io.opentelemetry.api.trace.SpanContext ctx = io.opentelemetry.api.trace.Span.current().getSpanContext();
+        return ctx.isValid() ? ctx.getTraceId() : null;
     }
 }

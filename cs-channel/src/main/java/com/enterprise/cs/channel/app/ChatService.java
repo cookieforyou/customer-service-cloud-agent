@@ -18,10 +18,12 @@ import com.enterprise.cs.commons.exception.BusinessException;
 import com.enterprise.cs.conversation.api.ConversationPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -48,16 +50,19 @@ public class ChatService {
     private final VisitorRateLimiter rateLimiter;
     private final SessionFrameBus frames;
     private final ChatTurnPort turnPort;
+    private final Duration heartbeatInterval;
 
     public ChatService(ConversationPort conversation, VisitorTokenService visitorTokens,
                        IdempotencyService idempotency, VisitorRateLimiter rateLimiter,
-                       SessionFrameBus frames, ChatTurnPort turnPort) {
+                       SessionFrameBus frames, ChatTurnPort turnPort,
+                       @Value("${cs.channel.heartbeat-interval:15s}") Duration heartbeatInterval) {
         this.conversation = conversation;
         this.visitorTokens = visitorTokens;
         this.idempotency = idempotency;
         this.rateLimiter = rateLimiter;
         this.frames = frames;
         this.turnPort = turnPort;
+        this.heartbeatInterval = heartbeatInterval;
     }
 
     public VisitorTokenResponse issueVisitorToken(VisitorTokenRequest request) {
@@ -107,7 +112,8 @@ public class ChatService {
         TURN_EXECUTOR.execute(() -> {
             try {
                 turnPort.runTurn(new ChatTurnPort.TurnCommand(
-                        sessionId, turnId, appended.messageId(), claims.tenantId(), request.text()), sink);
+                        sessionId, turnId, appended.messageId(), claims.tenantId(),
+                        claims.principalId(), request.text()), sink);
             } catch (Exception e) {
                 log.warn("turn 执行异常（兜底 ERROR 帧）: turnId={}", turnId, e);
                 sink.error(ErrorCodes.INTERNAL_ERROR, "turn failed");
@@ -118,7 +124,13 @@ public class ChatService {
 
     public Flux<ServerSentEvent<String>> stream(UUID sessionId, long lastEventId, AuthClaims claims) {
         requireOwnedSession(sessionId, claims);
-        return frames.subscribe(sessionId, lastEventId);
+        Flux<ServerSentEvent<String>> main = frames.subscribe(sessionId, lastEventId);
+        // 心跳（《08》§4）：注释帧 :ping 间隔可配（缺省 15s）——keep-alive 与代理超时防御；
+        // DONE/ERROR 即完成流，takeUntil 放行终止帧并取消心跳
+        Flux<ServerSentEvent<String>> pings = Flux.interval(heartbeatInterval)
+                .map(i -> ServerSentEvent.<String>builder().comment("ping").build());
+        return Flux.merge(main, pings)
+                .takeUntil(f -> "DONE".equals(f.event()) || "ERROR".equals(f.event()));
     }
 
     private ConversationPort.SessionInfo requireOwnedSession(UUID sessionId, AuthClaims claims) {

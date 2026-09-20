@@ -1,6 +1,6 @@
 # 11 · 安全与合规
 
-> 最后更新:2026-09-20 · v1.3.0(INF-2 回传核验：Casdoor 实测 claim 契约与转换器修正——坑#19) · v1.2.0(M0批3：访客 JWT 平台自签定案与双 issuer 资源服务器落地) · v1.1.0(终审：eval 端点访问面收紧 + 个人信息主体权利条款) · v1.0.0(初版) ｜ 依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链
+> 最后更新:2026-09-20 · v1.3.1(M0批5：actuator/prometheus 端点暴露面注记) · v1.3.0(INF-2 回传核验：Casdoor 实测 claim 契约与转换器修正——坑#19) · v1.2.0(M0批3：访客 JWT 平台自签定案与双 issuer 资源服务器落地) · v1.1.0(终审：eval 端点访问面收紧 + 个人信息主体权利条款) · v1.0.0(初版) ｜ 依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链
 
 ## 1. 威胁模型：OWASP Top 10 for LLM Applications 2025 → 客服场景映射
 
@@ -94,3 +94,4 @@
 - v1.1.0（2026-09-20）：终审修正——eval 端点访问面收紧（服务身份/禁公网）+ 个人信息主体权利条款（补登）。
 - v1.2.0（2026-09-20）：M0批3——访客 JWT 平台自签定案（appKey+HMAC 验签换发）与双 issuer 资源服务器落地（补登）。
 - v1.3.0（2026-09-20）：INF-2 回传核验——Casdoor 实测 claim 契约回写 §7（`roles` 对象数组取元素内 `name`、顶层 `name`=用户名、JWKS 端点无 `.json` 后缀、`owner`=租户、`aud` 格式）；转换器修正 + 单测钉死（坑#19；附注 Framework 7 / Security 7 bearer 认证默认追加 `FACTOR_BEARER` authority，测试精确断言须过滤角色面）。
+- v1.3.1（2026-09-20）：M0批5——`/actuator/prometheus` permitAll（§7 API 面）：ECS 内网同宿主 Prometheus 抓取口径，公网暴露面由安全组/前置层收敛；basic auth 化随 M1 安全复审。

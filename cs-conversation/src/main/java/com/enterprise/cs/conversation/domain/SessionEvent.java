@@ -46,12 +46,14 @@ public class SessionEvent {
     protected SessionEvent() {
     }
 
-    public SessionEvent(UUID id, UUID sessionId, int seq, String eventType, String payload, Instant occurredAt) {
+    public SessionEvent(UUID id, UUID sessionId, int seq, String eventType, String payload,
+                        String traceId, Instant occurredAt) {
         this.id = id;
         this.sessionId = sessionId;
         this.seq = seq;
         this.eventType = eventType;
         this.payload = payload;
+        this.traceId = traceId;
         this.occurredAt = occurredAt;
     }
 

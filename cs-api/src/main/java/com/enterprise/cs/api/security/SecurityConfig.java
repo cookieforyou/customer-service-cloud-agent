@@ -60,6 +60,9 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/widget/**", "/actuator/health", "/error").permitAll()
+                        // Prometheus 抓取端点（M0批5）：ECS 内网同宿主抓取，permitAll；公网暴露面由安全组/前置层收敛，
+                        // basic auth 化随 M1 安全复审（《11》§7）
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/chat/visitor-tokens").permitAll()
                         .requestMatchers("/api/v1/chat/**").hasRole("VISITOR")
                         .anyRequest().authenticated())

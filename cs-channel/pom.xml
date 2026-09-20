@@ -45,6 +45,15 @@
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-oauth2-jose</artifactId>
     </dependency>
+    <!-- M0批5 观测：chat.turn 根 Observation + cs_turn_* 指标（《10》§2/§5） -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-observation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-core</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>

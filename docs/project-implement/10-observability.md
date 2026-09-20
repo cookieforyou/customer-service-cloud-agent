@@ -1,6 +1,6 @@
 # 10 · 可观测性
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-08，《09》Langfuse 质量运营。
+> 版本 v1.1.0 ｜ 2026-09-20 ｜ M0批5：观测出数落地（tracing/指标/trace_id 回填/心跳）。依赖《01》D-08，《09》Langfuse 质量运营。
 
 ## 1. 总链路
 
@@ -99,3 +99,4 @@ PG 表 `cs_audit_log`（与 Langfuse 物理隔离；观测系统可挂，审计�
 ## 8. 修订注记
 
 - v1.0.0（2026-09-20）：初版。
+- v1.1.0（2026-09-20）：M0批5 落地注记——① 接线形态：Boot 4.1 `spring-boot-micrometer-tracing-opentelemetry` + OTLP exporter + Prometheus registry（姊妹同款实证；`management.otlp.tracing.*` 前缀为 Boot 4.1 迁移后形态、endpoint 须带全路径 `/v1/traces`，坑#24 预防）；导出总开关缺省关（`CS_OTLP_ENABLED`），未配端点零导出。② M0 指标子集：`cs_turn_total{state}` + `cs_chat_total_seconds` 直方图（channel 适配器记录）；**首响 `cs_chat_first_token_seconds` 未落**——需引擎首 token 时点回传（TurnFrames 契约扩展），M1 补（复盘提案）。③ 根 span：`chat.turn` 手动 Observation（属性 cs.tenant_id/cs.channel 低基、cs.session_id/cs.turn_id/langfuse.user.id/langfuse.session.id 高基）；ObservationRootAdvisor 链化与 cs.intent/agent_version 属性随 M1 Advisor 链。④ `cs_session_event.trace_id` 回填已落（同线程 Span 上下文，hex32 集成测试断言）。⑤ 采样 M0=1.0（出数验收），§4 采样矩阵（20%/100% 分流）M1 tailor 落。⑥ SSE 心跳 `:ping` 已落（《08》§4）。

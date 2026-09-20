@@ -1,6 +1,6 @@
 # M0 · Walking Skeleton（周 1–2）
 
-> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：🔶 进行中（M0批1–M0批4 已交付 ✅ 2026-09-20）
+> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：🔶 机器侧收官（M0批1–M0批5 已交付 ✅ 2026-09-20）；DoD 余用户侧：E2E-M0-1（含 E2E-M0-4）执行回传 + 复盘定案
 
 ## 1. 目标与范围
 
@@ -8,7 +8,7 @@
 
 ## 2. 前置依赖（用户侧）
 
-INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单；资产 M0批5 交付）；INF-2 Casdoor 应用注册 ✅ 已销账（2026-09-20 回传核验，坑#19 契约修正，详见用户侧清单）。ECS 既有 PG/Redis/ES/Milvus/Neo4j 直接复用（Testcontainers 为主，远端仅冒烟）。
+INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单；**M0批5 已交付资产**：deploy/ 栈与 README）；INF-2 Casdoor 应用注册 ✅ 已销账（2026-09-20 回传核验，坑#19 契约修正，详见用户侧清单）。ECS 既有 PG/Redis/ES/Milvus/Neo4j 直接复用（Testcontainers 为主，远端仅冒烟）。
 
 ## 3. 批次规划（2026-09-20 定案，可经复盘调整）
 
@@ -32,12 +32,14 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 | 0.6 | webchat 渠道 + SSE 帧协议 v1 | cs-channel | ACK/TOKEN/DONE/ERROR 帧可收；断线 Last-Event-ID 补发 | ✅ 2026-09-20 M0批3：visitor-tokens/sessions/messages/stream 四端点 + 帧总线（directBestEffort 热流 + 256 内存补发缓冲，Last-Event-ID 头 + query 降级）；全链集成测试实证 TOKEN×N+DONE、序号单调、id>afterId 精确补发；MVC 返回 Flux（V-03 实证可用，心跳挂 M0批5）。偏离注记：缓冲 Redis 化随多实例（M0批5 复审），回写《08》v1.1.0 |
 | 0.7 | 入站幂等去重 + 访客限流 | cs-channel | 同 channel_msg_id 重放只产生一轮 | ✅ 2026-09-20 M0批3：双闸实证——Redis SETNX/回执缓存路径 + 清 Redis 后 DB 唯键兜底路径（冲突事务滚出后新事务补偿读，坑#18）均 duplicate=true 且 messageId 一致；限流 RPM=3 实证第 4 次 429 RATE_LIMITED |
 | 0.8 | main_supervisor 最小链路 | cs-orchestration/ai-core | 消息→T1→SSE 全通；turn/message/event 落库 | ✅ 2026-09-20 M0批4：RoutingChatModel 骨架（T1 直连 + TierRoutingOptions 解析缝，熔断/T2 挂 M1；坑#20 Spring AI 2.0 装配形态核验）；supervisor 引擎（代码内 prompt + SessionMemoryAdvisor 窗口读拼，组装序 system-first 实证修正）；V3 cs_session_event 落位（ROUTE_DECIDED/MESSAGE_APPENDED）；轮次生命周期落库由 channel 适配器驱动（模块白名单，orchestration 保持纯运行时）。echo 桩经 `CS_TURN_ENGINE=orchestration` 退役切换。`mvn verify` 全绿（37 测试：编排全链集成 3（TOKEN×N+DONE/落库四表断言/窗口历史进第二轮 prompt/故障 FAILED+ERROR 帧）+ 引擎单测 2 + 路由单测 5 + 持久层 3 + channel 单测 7 + ChatFlow 6 + 转换器 4 + 全装配 1 + 架构 6）。坑#21（SSE 总线丢帧双缺陷：空会话订阅/快照缝隙，Flux.create 锁内桥接修正）+ 坑#22（-pl 须 -am）登记《15》v1.4.0。回写：《03》v1.2.0、《04》v1.1.0、《08》v1.2.0、《12》v1.3.0；E2E-M0-4 步骤交付（§7）。真实模型 E2E 待用户回传（E2E-M0-4） |
-| 0.9 | 观测出数 | cs-api | Jaeger 可见 chat span；Prometheus 抓到 cs_* 指标 | |
-| 0.10 | V-01~V-03 核验回写 | — | 《01》§7 状态更新 + 修订注记 | |
+| 0.9 | 观测出数 | cs-api | Jaeger 可见 chat span；Prometheus 抓到 cs_* 指标 | ✅ 2026-09-20 M0批5（机器侧）：Boot 4.1 micrometer-tracing-otel + OTLP（缺省关、CS_OTLP_ENDPOINT 全路径，坑#24 预防）+ Prometheus registry（/actuator/prometheus permitAll 内网口径）；`chat.turn` 根 Observation（cs.tenant/session/turn + langfuse.user/session 属性）；cs_turn_total{state} + cs_chat_total_seconds；cs_session_event.trace_id 回填（集成测试断言 hex32）；SSE 心跳 :ping（200ms 加速断言）；**坑#23 总线终结语义真实事故修复**（sink 不随 DONE 终结、桥接层按订阅终结——多轮实时帧可达）；优雅停机 graceful 70s + CS_SERVER_PORT（dev 8081/prod 8100）。部署资产交付（Dockerfile + deploy/ 栈 + INF-1 三件套）。Jaeger/Prometheus/Grafana 实际出数归 E2E-M0-1 用户侧验证 |
+| 0.10 | V-01~V-03 核验回写 | — | 《01》§7 状态更新 + 修订注记 | ✅ 2026-09-20 M0批5：《01》v1.2.0——V-01（连接参数仅 url/endpoint，属性层无鉴权面→transport 层注入，M1批4 落地；starter 实存 httpclient 形态）、V-02（`spring.ai.tools.limits.*` 五键实证：max-calls-per-tool-default/max-calls-per-tool.{tool}/excluded-tools/max-total-tool-calls/on-limit-exceeded）、V-03（MVC+Flux SSE M0批3 实证 + M0批5 心跳落地）。V-04~V-07 归属 M2/M1 批次不变 |
 
 ## 5. 决策点
 
-（暂无待拍板项；产生即按「选项表+定案记录」格式追加）
+| # | 决策 | 选项与定案 |
+|---|---|---|
+| D-M0-1 | SSE 补发缓冲 Redis 化（M0批3 偏离复审，2026-09-20 M0批5） | **维持内存 256 环形至多实例批次（M1 部署复核点）**——M0 单实例内存缓冲已含序号/补发/终结语义（坑#21/#23 修正后），Redis 化引入跨实例序号分配与补发一致性问题，单实例期收益为零；触发重估条件：多实例部署进入计划（M1 灰度拓扑落地时） |
 
 ## 6. 验收标准（里程碑 DoD）
 
@@ -47,33 +49,30 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 
 | 轮次 | 代号 | 结论 | 跟进 |
 |---|---|---|---|
-| — | E2E-M0-1（交付于M0批5） | 待交付 | — |
-| 1 | E2E-M0-4（交付于M0批4，步骤见下） | ⬜ 待用户执行（真实 GLM key） | — |
+| — | E2E-M0-1（交付于M0批5，步骤见下——已合并 E2E-M0-4 真实模型验证） | ⬜ 待用户执行（M0 收官一并） | — |
 
-### E2E-M0-4 最小对话链自测步骤（真实模型，用户侧执行）
+### E2E-M0-1 M0 收官综合验证（用户侧执行，合并 E2E-M0-4）
 
-前置：本机（或可达的）PostgreSQL 与 Redis；智谱 GLM API Key 一个（OpenAI 兼容端点）。
+前置：本机或 ECS 可达的 PostgreSQL + Redis；智谱 GLM API Key；按 `deploy/README.md` 准备 `.env`。
 
-1. 配置环境（仓库根 `.env` 已有占位，填入后导出）：
-   ```bash
-   # .env 中：CS_AI_API_KEY=<你的智谱key>  CS_AI_ENABLED=true  CS_TURN_ENGINE=orchestration
-   set -a; source .env; set +a
-   export CS_DB_URL CS_DB_USER CS_DB_PASSWORD CS_REDIS_HOST CS_REDIS_PORT \
-          CS_WEBCHAT_APP_KEY CS_WEBCHAT_APP_SECRET CS_WEBCHAT_TENANT \
-          CS_AI_ENABLED CS_AI_API_KEY CS_TURN_ENGINE
-   ```
-2. 启动（prod 端口 8100 形态 M0批5 落地，本步 dev 8081）：
-   ```bash
-   mvn -q package -DskipTests && java -jar cs-api/target/cs-api-*.jar
-   ```
-3. 浏览器打开 `http://localhost:8081/widget/`，发两条消息（如「退款怎么办理」→「多久到账」），预期：
-   - 每条消息收到流式 TOKEN 增量后以 DONE 结束（一轮一连接，页面自动重连续接）；
-   - 第二条的回答体现上下文（知道在问退款的到账时间）——窗口记忆生效。
-4. 数据核验（psql 连 `CS_DB_URL`）：
-   ```sql
-   SELECT state, model_tier, tokens_in, tokens_out, latency_ms FROM cs_turn ORDER BY created_at DESC LIMIT 2;
-   SELECT role, turn_id IS NOT NULL AS bound, left(content, 40) FROM cs_message ORDER BY seq DESC LIMIT 4;
-   SELECT seq, event_type FROM cs_session_event ORDER BY seq;
-   ```
-   预期：两轮 state=COMPLETED、model_tier=T1、tokens_in/out 非空；AI 消息带 turn_id；事件含 ROUTE_DECIDED + MESSAGE_APPENDED×2。
-5. 回传：两条回答文本摘要 + 上述三组 SQL 读数（结论落档即可，勿贴 key）。
+**A. 观测栈接入（INF-1，一次性）**：按 `deploy/README.md` §1-§4 执行（构建镜像 → 起 csca 栈 → Prometheus 纳管 → Grafana 导入）。
+
+**B. 真实模型对话链（原 E2E-M0-4）**：
+1. `.env`：`CS_AI_API_KEY=<智谱key>`、`CS_AI_ENABLED=true`、`CS_TURN_ENGINE=orchestration`、`CS_OTLP_ENABLED=true`（容器内 endpoint 已由 compose 注入 collector）；
+2. 起栈：`docker compose -f deploy/docker-compose.csca.yml up -d`；
+3. 浏览器 `http://<host>:8100/widget/` 发两条消息（「退款怎么办理」→「多久到账」），预期：流式 TOKEN 后 DONE；第二条体现上下文（窗口记忆）。
+
+**C. 观测读数**：
+- Jaeger（kb 栈 UI，宿主 16687）：Service=cs-api，见 `chat.turn` span，属性含 cs.tenant_id/cs.session_id/langfuse.user.id；
+- Prometheus：`up{job="cs-api"}=1`、发消息后 `cs_turn_total{state="COMPLETED"}` 增长；
+- Grafana csca-m0 盘出数（轮次量/失败/P95）。
+
+**D. 数据核验**（psql 连 CS_DB_URL）：
+```sql
+SELECT state, model_tier, tokens_in, tokens_out, latency_ms FROM cs_turn ORDER BY created_at DESC LIMIT 2;
+SELECT role, turn_id IS NOT NULL AS bound, left(content,40) FROM cs_message ORDER BY seq DESC LIMIT 4;
+SELECT seq, event_type, left(trace_id,8) FROM cs_session_event ORDER BY seq;
+```
+预期：两轮 COMPLETED/T1/tokens 非空；AI 消息带 turn_id；事件 ROUTE_DECIDED+MESSAGE_APPENDED×2 且 trace_id 非空（hex）。
+
+**E. 回传**：B 两条回答摘要 + C 三项观测读数 + D 三组 SQL 读数（结论落档即可，勿贴 key）。

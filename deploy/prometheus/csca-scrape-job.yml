@@ -1,0 +1,11 @@
+# CSCA 抓取作业片段（INF-1）：追加/独立 include 进既有 Prometheus 配置
+# 接入形态（回滚友好）：既有 prometheus.yml 的 scrape_configs 段尾追加，或以独立 job 文件
+# + include 组合（以既有栈实际组织形态为准）；改前先备份原 prometheus.yml（INF-1 前置）。
+# 既有栈 Prometheus 容器 → 抓宿主映射端口：cs-api 容器映射 8100（deploy/docker-compose.csca.yml）。
+- job_name: cs-api
+  metrics_path: /actuator/prometheus
+  scrape_interval: 15s
+  static_configs:
+    - targets: ['host.docker.internal:8100']
+      labels:
+        service: cs-api

@@ -1,0 +1,54 @@
+# ============================================================
+# CSCA 部署栈（M0批5：cs-api 容器 + 自有 OTel Collector）
+# 《13》§1 prod 端口 8100（与知识服务 8090 同 ECS 共存）；《14》§0 INFRA 复用口径。
+# Jaeger/Prometheus/Grafana 复用 kb-rag-agent 既有栈（不在此起）；Prometheus 抓取经
+# 宿主地址（scrape job 资产见 deploy/prometheus/csca-scrape-job.yml）。
+# 分栈 compose 纪律（坑#09）：本栈独立 down 不影响 kb 栈；不用 --remove-orphans。
+# 镜像钉版（坑#06）。密钥经 env_file（.env，gitignore 排除）。
+# ============================================================
+services:
+  cs-api:
+    image: csca/cs-api:1.0.0-SNAPSHOT
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    environment:
+      CS_SERVER_PORT: "8100"
+      CS_DB_URL: ${CS_DB_URL:?须在 .env 提供}
+      CS_DB_USER: ${CS_DB_USER:?}
+      CS_DB_PASSWORD: ${CS_DB_PASSWORD:?}
+      CS_REDIS_HOST: ${CS_REDIS_HOST:?}
+      CS_REDIS_PORT: ${CS_REDIS_PORT:-6379}
+      CS_WEBCHAT_APP_KEY: ${CS_WEBCHAT_APP_KEY:?}
+      CS_WEBCHAT_APP_SECRET: ${CS_WEBCHAT_APP_SECRET:?}
+      CS_WEBCHAT_TENANT: ${CS_WEBCHAT_TENANT:?}
+      # 观测（《10》）：容器内经服务名直达 collector
+      CS_OTLP_ENABLED: "true"
+      CS_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      CS_TRACING_SAMPLING: ${CS_TRACING_SAMPLING:-1.0}
+      # 模型（真实对话链时启用；echo 桩可缺省）
+      CS_AI_ENABLED: ${CS_AI_ENABLED:-false}
+      CS_AI_API_KEY: ${CS_AI_API_KEY:-}
+      CS_AI_MODEL: ${CS_AI_MODEL:-glm-5.3-flash}
+      CS_TURN_ENGINE: ${CS_TURN_ENGINE:-echo}
+      # Casdoor（私有部署地址经 .env 注入，不入仓库）
+      CS_AUTH_CASDOOR_ISSUER: ${CS_AUTH_CASDOOR_ISSUER:-}
+      CS_AUTH_CASDOOR_JWKS: ${CS_AUTH_CASDOOR_JWKS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4320:4318"   # 宿主侧 dev 直推口径（app 宿主运行时用 localhost:4320；容器间走服务名 4318）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

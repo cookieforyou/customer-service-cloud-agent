@@ -75,25 +75,24 @@ public class SessionFrameBus {
             @Override
             public void done() {
                 emit(s, "DONE", Map.of("turnId", turnId.toString(), "messageId", messageId.toString()));
-                s.sink.tryEmitComplete();
             }
 
             @Override
             public void error(String code, String message) {
                 emit(s, "ERROR", Map.of("code", code, "message", message));
-                s.sink.tryEmitComplete();
             }
         };
     }
 
     /**
      * 订阅会话流：先补发 afterId 之后的缓冲帧，再接入热流。
-     * computeIfAbsent：合法时序为「先订阅、后发首条消息」（Widget/EventSource 均如此）——
-     * 订阅时无轮次则建空流保持挂起，直至首帧/DONE/ERROR；返回 empty 会令客户端连接即关、
-     * EventSource 重连循环（M0批4 集成测试实证修正）。
-     * 桥接（Flux.create + buffer 锁内先重放再挂热订阅，按 id 去重）：消除「快照与热订阅挂接
-     * 之间」的缝隙丢帧——该窗口内发射的帧既不在重放快照、又因 directBestEffort 无订阅者而被丢
-     * （M0批4 集成测试实证修正）；DONE/ERROR 完成热流，多轮会话由客户端 Last-Event-ID 重连续接。
+     * computeIfAbsent：合法时序为「先订阅、后发首条消息」（Widget/EventSource 均如此）。
+     * 桥接（Flux.create + buffer 锁内先重放再挂热订阅，按 id 去重）：消除「快照与热订阅挂接之间」
+     * 的缝隙丢帧。
+     * **终结语义（M0批5 实证修正，坑#21 续）**：会话 sink 不随 DONE/ERROR 终结（多轮会话的实时帧
+     * 必须持续可达——终结 sink 会使第二轮起全部帧只进缓冲、实时连接 20s 挂死）；「DONE/ERROR 即
+     * 完成流」是**单订阅连接**的语义——桥接层转发到终止帧后完成该订阅 emitter，会话总线保持热。
+     * streams 表清理挂 M1 会话 IDLE/CLOSED 生命周期（单实例期内存有界）。
      */
     public Flux<ServerSentEvent<String>> subscribe(UUID sessionId, long afterId) {
         SessionStream s = streams.computeIfAbsent(sessionId, id -> new SessionStream());
@@ -105,6 +104,10 @@ public class SessionFrameBus {
                     if (f.id() > afterId) {
                         last[0] = f.id();
                         emitter.next(toSse(f));
+                        if (isTerminal(f)) {
+                            emitter.complete();
+                            return;
+                        }
                     }
                 }
                 hot.set(s.sink.asFlux().subscribe(
@@ -113,6 +116,9 @@ public class SessionFrameBus {
                             if (id > last[0]) {
                                 last[0] = id;
                                 emitter.next(toSse(frame));
+                                if (isTerminal(frame)) {
+                                    emitter.complete();
+                                }
                             }
                         },
                         emitter::error,
@@ -125,6 +131,10 @@ public class SessionFrameBus {
                 }
             });
         });
+    }
+
+    private static boolean isTerminal(Frame f) {
+        return "DONE".equals(f.event()) || "ERROR".equals(f.event());
     }
 
     private static ServerSentEvent<String> toSse(Frame f) {

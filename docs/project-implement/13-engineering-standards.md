@@ -1,6 +1,6 @@
 # 13 · 工程规范与质量门禁
 
-> 最后更新:2026-09-20 · v1.1.0(终审：补灰度部署拓扑与优雅停机) · v1.0.0(初版) ｜ 依赖《02》模块结构。总纪律见 `AGENTS.md`（文档 DNA、先核验再落码、一功能一提交等）
+> 最后更新:2026-09-20 · v1.2.0(M0批5：部署形态落地——Dockerfile/compose 资产/8100/优雅停机) · v1.1.0(终审：补灰度部署拓扑与优雅停机) · v1.0.0(初版) ｜ 依赖《02》模块结构。总纪律见 `AGENTS.md`（文档 DNA、先核验再落码、一功能一提交等）
 
 ## 1. 环境矩阵
 
@@ -77,3 +77,5 @@ merge(main) → sit 自动部署 → 冒烟(eval 子集)
 ## 8. 修订注记
 
 - v1.0.0（2026-09-20）：初版。
+- v1.1.0（2026-09-20）：终审——补灰度部署拓扑（双容器+nginx 权重）与优雅停机（补登）。
+- v1.2.0（2026-09-20）：M0批5 部署形态落地——根 `Dockerfile`（temurin 25 JRE 钉版、fat jar 宿主侧构建、SIGTERM 优雅停机、healthcheck）+ `deploy/docker-compose.csca.yml`（cs-api 8100 + 自有 OTel Collector 0.161.0，分栈纪律坑#09，密钥经 .env）+ `deploy/{prometheus,grafana}` INF-1 资产 + `deploy/README.md` 操作序列；`server.shutdown=graceful` + 排空上限 70s（整轮预算 60s+缓冲）；dev 8081 / prod 8100 经 `CS_SERVER_PORT` 切换。停机前 SSE 广播 DONE/ERROR 帧随 M1（当前优雅停机=HTTP 排空 + 在途轮排空）。

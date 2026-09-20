@@ -1,6 +1,6 @@
 # 01 · 总体架构与关键决策
 
-> 最后更新:2026-09-20 · v1.1.0(终审：新增核验点 V-07——MCP 按工具超时覆盖) · v1.0.0(初版：基于 2026-09 三路 Web 调研——Spring AI 2.0 官方实践 / 2026 客服 Agent 平台参考架构 / 评测可观测安全合规落地)
+> 最后更新:2026-09-20 · v1.2.0(M0批5：V-01~V-03 源码/实证核验收口) · v1.1.0(终审：新增核验点 V-07——MCP 按工具超时覆盖) · v1.0.0(初版：基于 2026-09 三路 Web 调研——Spring AI 2.0 官方实践 / 2026 客服 Agent 平台参考架构 / 评测可观测安全合规落地)
 
 ## 1. 产品定位与范围
 
@@ -155,9 +155,9 @@ sequenceDiagram
 
 | # | 待核验点 | 位置 |
 |---|---|---|
-| V-01 | MCP client streamable-http 连接注入 `Authorization` 头的配置形态 | MCP Java SDK 2.0.x / Spring AI 2.0.1 autoconfigure 源码 |
-| V-02 | `spring.ai.tools.limits.*` 配置键实际名称与默认值 | spring-ai-tools 模块 |
-| V-03 | MVC 下 Controller 返回 `Flux` 的 SSE 适配行为与心跳控制 | Spring Framework 7 |
+| V-01 | ✅ 已核验（M0批5，源码级 javap）：2.0.1 `McpStreamableHttpClientProperties.ConnectionParameters` = record(`url`, `endpoint`) **仅此两字段——属性层无 headers/鉴权面**，`Authorization` 注入不可经配置完成，须在 transport/HTTP client 定制层实现（自定义 `McpTransport`/`StreamableHttp` transport bean 或 client 拦截器），M1批4 KB 接入时落地；另：2.0.1 本机实存 starter 为 `spring-ai-starter-mcp-client`（transport=httpclient 形态 autoconfigure），调研所称 webflux 专用 starter 未见——M1批4 落码时再定形态 | MCP Java SDK 2.0.x / Spring AI 2.0.1 autoconfigure 源码 |
+| V-02 | ✅ 已核验（M0批5，源码级 javap `ToolCallingProperties$Limits`，前缀常量 `spring.ai.tools`）：实际键 = `spring.ai.tools.limits.max-calls-per-tool-default`（Integer）、`max-calls-per-tool.<toolName>`（Map<String,Integer>）、`excluded-tools`（List）、`max-total-tool-calls`（Integer）、`on-limit-exceeded`（`ToolCallLimitBehavior` 枚举）——与《06》§4 白名单限流对齐 | spring-ai-tools 模块 |
+| V-03 | ✅ 已实证（M0批3 集成测试：MVC Controller 返回 `Flux<ServerSentEvent>` 可用；M0批5 补心跳落地：注释帧 `:ping` 间隔可配缺省 15s，`takeUntil` 终止帧后取消心跳；《08》§4/§8） | Spring Framework 7 |
 | V-04 | `spring-ai-a2a` server autoconfigure 实际能力（M2 spike） | spring-ai-community 仓库（注意：其底层 a2a-java SDK 有 Spring 适配判负先例，坑#02） |
 | V-05 | Langfuse OTLP 集成细节（`ObservationFilter` 注入 `gen_ai.prompt/completion`、`langfuse.*` 属性） | Langfuse 官方 Spring AI 指南 + 样例工程 |
 | V-06 | Milvus starter 元数据过滤表达式对 tenant_id 过滤的下推行为 | spring-ai-vector-store-milvus |

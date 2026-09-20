@@ -1,0 +1,27 @@
+# CSCA 自有轻量 OTel Collector（《10》§1 fan-out；《14》§0 compose 资产 M0批5 交付）
+# M0 链路：cs-api(OTLP/HTTP) → 本 collector → 复用 kb-rag-agent 栈的 Jaeger（工程排障）
+# M1 扩展：Langfuse Project OTLP 第二 exporter（INF-5，配 pk/sk Basic Auth 头）
+# 镜像钉版（坑#06）：otel/opentelemetry-collector-contrib v0.161.0（2026-09 releases 稳定版）
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlphttp/jaeger:
+    # 复用既有 kb 栈 Jaeger 的 OTLP HTTP 入口（宿主映射 4319）——以 ECS 实际端口为准可覆盖
+    endpoint: ${env:CSCA_JAEGER_OTLP_ENDPOINT:http://host.docker.internal:4319}
+  # 调试自检（临时打开：logs level=debug 查看 span 是否到达）
+  # debug:
+
+service:
+  telemetry:
+    logs:
+      level: info
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlphttp/jaeger]
+      # M1：traces 双发加 langfuse exporter（OTLP/HTTP + Basic Auth pk:sk，INF-5）

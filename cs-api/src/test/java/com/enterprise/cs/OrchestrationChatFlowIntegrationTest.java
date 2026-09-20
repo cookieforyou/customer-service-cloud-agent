@@ -99,6 +99,8 @@ class OrchestrationChatFlowIntegrationTest {
         r.add("spring.data.redis.port", () -> String.valueOf(REDIS.getMappedPort(6379)));
         r.add("cs.auth.visitor.public-key-pem", () -> pem(VISITOR.getPublic(), "PUBLIC KEY"));
         r.add("cs.auth.visitor.private-key-pem", () -> pem(VISITOR.getPrivate(), "PRIVATE KEY"));
+        // 心跳测试加速：200ms 注释帧（《08》§4 缺省 15s）
+        r.add("cs.channel.heartbeat-interval", () -> "200ms");
     }
 
     @BeforeEach
@@ -152,6 +154,37 @@ class OrchestrationChatFlowIntegrationTest {
                 "select event_type from cs_session_event where session_id = ? order by seq",
                 String.class, sessionId));
         assertThat(eventTypes).contains("ROUTE_DECIDED", "MESSAGE_APPENDED");
+
+        // M0批5 观测：chat.turn 根 span 的 trace_id 回填事件表（hex 32；《10》§2）
+        List<String> traceIds = await(() -> jdbc.queryForList(
+                "select trace_id from cs_session_event where session_id = ? and trace_id is not null",
+                String.class, sessionId));
+        assertThat(traceIds).isNotEmpty();
+        assertThat(traceIds.get(0)).matches("[0-9a-f]{32}");
+
+        // M0批5 指标：cs_turn_total{state} / cs_chat_total_seconds 经 /actuator/prometheus 暴露（《10》§5）
+        String prom = getRaw("/actuator/prometheus");
+        assertThat(prom).contains("cs_turn_total").contains("state=\"COMPLETED\"");
+        assertThat(prom).contains("cs_chat_total_seconds");
+    }
+
+    // ---------- ⑤ SSE 心跳：空闲会话注释帧（M0批5，《08》§4） ----------
+
+    @Test
+    void idleStreamEmitsHeartbeatPings() {
+        String token = visitorToken("v-hb");
+        UUID sessionId = openSession(token);
+        ServerSentEvent<String> ping = client().get()
+                .uri("/api/v1/chat/sessions/" + sessionId + "/stream")
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .headers(h -> h.setBearerAuth(token))
+                .retrieve()
+                .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
+                })
+                .filter(f -> "ping".equals(f.comment()))
+                .next()
+                .block(Duration.ofSeconds(3));
+        assertThat(ping).as("200ms 心跳间隔下 3s 内应收到 :ping 注释帧").isNotNull();
     }
 
     // ---------- ③ 窗口历史进第二轮 prompt ----------
@@ -327,6 +360,12 @@ class OrchestrationChatFlowIntegrationTest {
                 .bodyValue(body)
                 .exchangeToMono(r -> r.bodyToMono(String.class).defaultIfEmpty("")
                         .map(s -> new Resp(r.statusCode().value(), parse(s))))
+                .block(Duration.ofSeconds(15));
+    }
+
+    private String getRaw(String path) {
+        return client().get().uri(path)
+                .exchangeToMono(r -> r.bodyToMono(String.class).defaultIfEmpty(""))
                 .block(Duration.ofSeconds(15));
     }
 

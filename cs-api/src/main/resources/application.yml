@@ -54,5 +54,33 @@ cs:
       visitor-rpd: ${CS_LIMIT_VISITOR_RPD:200}
 
 server:
-  # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8，部署形态 M0批5 落地）
-  port: 8081
+  # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8/《13》§1，CS_SERVER_PORT 注入）
+  port: ${CS_SERVER_PORT:8081}
+  # 优雅停机（《13》§6）：在途轮排空（M0 整轮预算 60s + 缓冲）
+  shutdown: graceful
+
+spring.lifecycle.timeout-per-shutdown-phase: ${CS_SHUTDOWN_TIMEOUT:70s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      # M0 出数验收期 1.0 全量；《10》§4 采样矩阵（默认 20%、工具/审批/ERROR 100%）M1 落 tailor
+      probability: ${CS_TRACING_SAMPLING:1.0}
+    export:
+      otlp:
+        # 缺省关——未配端点零导出零噪音（姊妹同款开关形态）；E2E/部署开 CS_OTLP_ENABLED=true
+        enabled: ${CS_OTLP_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          # Boot 4.1 属性形态（姊妹实证：management.otlp.tracing.* 前缀）；
+          # 信号专属 endpoint 原样使用不自动追加 /v1/traces——必须带全路径
+          endpoint: ${CS_OTLP_ENDPOINT:http://localhost:4320/v1/traces}

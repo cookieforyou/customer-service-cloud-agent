@@ -36,6 +36,11 @@
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
     </dependency>
+    <!-- M0批5：cs_session_event.trace_id 回填（读当前 span，版本 Boot BOM 托管 1.62.0） -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>

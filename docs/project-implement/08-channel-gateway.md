@@ -1,6 +1,6 @@
 # 08 · 渠道接入层
 
-> 最后更新:2026-09-20 · v1.2.0(M0批4：SSE 总线两处丢帧缺陷实证修正——空会话订阅/补发快照缝隙) · v1.1.0(M0批3：sign 算法定案/SSE 补发内存缓冲偏离注记/lastEventId query 降级) · v1.0.0(初版) ｜ 依赖《01》D-07/D-12/D-13，《03》幂等
+> 最后更新:2026-09-20 · v1.3.0(M0批5：终结语义修正——sink 会话级不终结 + 心跳落地) · v1.2.0(M0批4：SSE 总线两处丢帧缺陷实证修正——空会话订阅/补发快照缝隙) · v1.1.0(M0批3：sign 算法定案/SSE 补发内存缓冲偏离注记/lastEventId query 降级) · v1.0.0(初版) ｜ 依赖《01》D-07/D-12/D-13，《03》幂等
 
 ## 1. ChannelAdapter SPI
 
@@ -79,3 +79,4 @@ openapi 渠道不使用帧协议，返回 `{answer, turnId, refs[], toolCalls[],
 - v1.0.0（2026-09-20）：初版。
 - v1.1.0（2026-09-20）：M0批3——sign 算法定案（HMAC-SHA256 常量时间比较）、SSE 补发缓冲内存化偏离注记（Redis 化随多实例，M0批5 复审）、lastEventId query 降级（补登）。
 - v1.2.0（2026-09-20）：M0批4——**SessionFrameBus 两处丢帧缺陷实证修正**（坑#21）：① 订阅时无轮次的会话返回空流 → 客户端连接即关、EventSource 重连循环——修为 `computeIfAbsent` 建流挂起（合法时序=先订阅后发首条消息）；② 补发快照与热订阅挂接之间存在缝隙（窗口内帧既不在快照、又因 directBestEffort 无订阅者被丢）——修为 `Flux.create` 桥接（buffer 锁内先重放再挂热订阅、按 id 去重，快照与订阅原子化）。多轮协议语义重申：**DONE/ERROR 即完成流，一轮一连接**；多轮由客户端 Last-Event-ID 重连续接（缓冲重放），非长连接多轮。
+- v1.3.0（2026-09-20）：M0批5——**终结语义再修正（坑#23，v1.2.0「一轮一连接」表述的落地形态）**：会话级 sink **不**随 DONE/ERROR `tryEmitComplete`（终结 sink 会使第二轮起实时帧全部静默落缓冲、在线连接挂死）——「DONE 即完成流」由**桥接层在转发到终止帧时 complete 该订阅 emitter** 实现，会话总线保持热、多轮实时可达；连接层 `Flux.merge` 心跳（`:ping`，`cs.channel.heartbeat-interval` 缺省 15s）+ `takeUntil` 终止帧取消心跳。streams 表清理挂 M1 会话生命周期。

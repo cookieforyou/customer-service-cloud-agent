@@ -10,7 +10,7 @@ public interface ChatTurnPort {
 
     void runTurn(TurnCommand command, FrameSink sink) throws Exception;
 
-    /** turnId/messageId 由受理侧生成并传递（DONE 帧与幂等回执引用）。 */
-    record TurnCommand(UUID sessionId, UUID turnId, UUID messageId, String tenantId, String userText) {
+    /** turnId/messageId 由受理侧生成并传递（DONE 帧与幂等回执引用）；visitorId 供观测根 span 归组（《10》§2）。 */
+    record TurnCommand(UUID sessionId, UUID turnId, UUID messageId, String tenantId, String visitorId, String userText) {
     }
 }
