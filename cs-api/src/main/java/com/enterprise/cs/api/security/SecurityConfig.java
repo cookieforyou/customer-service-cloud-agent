@@ -94,8 +94,12 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
-    /** scope=cs.webchat → ROLE_VISITOR；Casdoor roles（集合或单值）→ ROLE_*。 */
-    private JwtAuthenticationConverter authorityConverter() {
+    /**
+     * scope=cs.webchat → ROLE_VISITOR；Casdoor roles → ROLE_*。
+     * INF-2 实测（2026-09-20，《11》§7 v1.3.0，坑#19）：Casdoor 实发 roles 为对象数组，
+     * 角色名在元素 {@code name} 字段；同时兼容字符串/字符串集合形态。
+     */
+    JwtAuthenticationConverter authorityConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             var authorities = new ArrayList<GrantedAuthority>();
@@ -105,12 +109,31 @@ public class SecurityConfig {
             }
             Object roles = jwt.getClaims().get("roles");
             if (roles instanceof Iterable<?> collection) {
-                collection.forEach(r -> authorities.add(new SimpleGrantedAuthority("ROLE_" + r)));
-            } else if (roles instanceof String role) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                for (Object role : collection) {
+                    String name = roleName(role);
+                    if (name != null) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + name));
+                    }
+                }
+            } else {
+                String single = roleName(roles);
+                if (single != null) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + single));
+                }
             }
             return authorities;
         });
         return converter;
+    }
+
+    /** Casdoor 实测 roles 元素为对象（角色名取 name）；兼容字符串角色；无法解析返回 null（跳过）。 */
+    private static String roleName(Object role) {
+        if (role instanceof String s) {
+            return s.isBlank() ? null : s;
+        }
+        if (role instanceof Map<?, ?> m && m.get("name") instanceof String name) {
+            return name.isBlank() ? null : name;
+        }
+        return null;
     }
 }

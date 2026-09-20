@@ -1,6 +1,6 @@
 # M0 · Walking Skeleton（周 1–2）
 
-> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：🔶 进行中（M0批1 已交付 ✅ 2026-09-20）
+> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：🔶 进行中（M0批1–M0批3 已交付 ✅ 2026-09-20）
 
 ## 1. 目标与范围
 
@@ -8,7 +8,7 @@
 
 ## 2. 前置依赖（用户侧）
 
-INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单）；INF-2 Casdoor 应用注册。ECS 既有 PG/Redis/ES/Milvus/Neo4j 直接复用（Testcontainers 为主，远端仅冒烟）。
+INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单；资产 M0批5 交付）；INF-2 Casdoor 应用注册 ✅ 已销账（2026-09-20 回传核验，坑#19 契约修正，详见用户侧清单）。ECS 既有 PG/Redis/ES/Milvus/Neo4j 直接复用（Testcontainers 为主，远端仅冒烟）。
 
 ## 3. 批次规划（2026-09-20 定案，可经复盘调整）
 
