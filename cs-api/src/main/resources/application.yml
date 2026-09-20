@@ -32,8 +32,17 @@ cs:
       public-key-pem: ${CS_AUTH_VISITOR_PUB_PEM:}
       private-key-pem: ${CS_AUTH_VISITOR_PRIV_PEM:}
       ttl: 24h
+  ai:
+    enabled: ${CS_AI_ENABLED:false}   # M0批4：true 时装配 T1 模型（需 CS_AI_API_KEY）；echo 桩/无模型测试保持 false
+    t1:
+      base-url: ${CS_AI_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
+      api-key: ${CS_AI_API_KEY:}
+      model: ${CS_AI_MODEL:glm-5.3-flash}
+  conversation:
+    memory:
+      window: ${CS_MEMORY_WINDOW:10}   # SessionMemoryAdvisor 窗口读拼（《03》§3.2 雏形）
   channel:
-    turn-engine: ${CS_TURN_ENGINE:echo}   # M0批4 起切 orchestration
+    turn-engine: ${CS_TURN_ENGINE:echo}   # M0批4 起可切 orchestration（supervisor 最小对话链）
     webchat:
       sign-window: 5m
       apps:

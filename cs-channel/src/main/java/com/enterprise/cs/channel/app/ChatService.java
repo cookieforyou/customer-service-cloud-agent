@@ -16,6 +16,8 @@ import com.enterprise.cs.commons.constant.ErrorCodes;
 import com.enterprise.cs.commons.constant.RedisKeys;
 import com.enterprise.cs.commons.exception.BusinessException;
 import com.enterprise.cs.conversation.api.ConversationPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -31,6 +33,9 @@ import java.util.concurrent.Executors;
  */
 @Service
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
+
 
     private static final String CHANNEL = "webchat";
 
@@ -104,6 +109,7 @@ public class ChatService {
                 turnPort.runTurn(new ChatTurnPort.TurnCommand(
                         sessionId, turnId, appended.messageId(), claims.tenantId(), request.text()), sink);
             } catch (Exception e) {
+                log.warn("turn 执行异常（兜底 ERROR 帧）: turnId={}", turnId, e);
                 sink.error(ErrorCodes.INTERNAL_ERROR, "turn failed");
             }
         });

@@ -10,4 +10,37 @@
   </parent>
   <artifactId>cs-ai-core</artifactId>
   <name>CSCA :: ai-core</name>
+  <description>AI 核心——ChatClient/Advisor 链装配、模型分级路由（RoutingChatModel）、语义缓存、护栏 Advisor</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-commons</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <!-- ChatModel/ChatOptions/Prompt/Advisor 契约（版本经根 BOM） -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-client-chat</artifactId>
+    </dependency>
+    <!-- T1 载体：OpenAI 兼容端点（GLM/DeepSeek/百炼同构，手工装配，不用 starter——防自动装配多模型冲突） -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-openai</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

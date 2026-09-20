@@ -20,7 +20,7 @@
 
 ## 架构事实（同步自 docs/project-implement v1.0.0，2026-09-20）
 
-- **平台**：CSCA（企业智能客服 & 多 Agent 协同平台）。技术基座已定案：Spring AI 2.0.x + Spring Boot 4.1.x + Framework 7 + JDK 25 LTS；模型走 OpenAI 兼容（T1 glm-5.3-flash 主 / T2 deepseek 回退 / T0 qwen flash 辅助族，与知识服务同源策略）。
+- **平台**：CSCA（企业智能客服 & 多 Agent 协同平台）。技术基座已定案：Spring AI 2.0.x + Spring Boot 4.1.x + Framework 7 + JDK 25 LTS；模型走 OpenAI 兼容（T1 glm-5.3-flash 主 / T2 deepseek 回退 / T0 qwen flash 辅助族，与知识服务同源策略）。模型装配形态（M0批4 定案）：手工 `OpenAiChatModel.builder().options(OpenAiChatOptions)`（baseUrl/apiKey 经 options；坑#20），经 `cs.ai.enabled` 开关 + RoutingChatModel（@Primary）路由；多轮 SSE 语义 = DONE 即完成流、一轮一连接、Last-Event-ID 续接（坑#21）。
 - **形态**：模块化单体——Maven 多模块（cs-commons/infra/ai-core/conversation/knowledge/tooling/orchestration/collaboration/channel/eval/admin/api）+ ArchUnit 边界 + Spring Modulith 事件注册表；基础包 `com.enterprise.cs`；prod 端口 8100（与知识服务 8090 同 ECS 共存）。
 - **权威设计**：`docs/project-implement/`（README 总目录 + 01-15）。Advisor 链序唯一权威定义在《03》§4；指标口径（Contained/Verified Resolution 等）唯一权威在《09》§1；ADR 决策记录 D-01~D-18 与生命周期纪律在《01》§5/§6；实证坑位台账在《15》（预置继承 12 条）。进度族结构（索引 + 00 状态行卷 + M0-M4 里程碑卷 + 用户侧清单）见 `docs/project-progress/PROJECT-PROGRESS.md`。
 - **关键外部契约**：知识服务（corporate-knowledge-base-rag-agent，已上线）MCP `POST /mcp`（工具 search/get_document/ask，JWT，限流 120/60s/租户）为主通道；A2A `POST /a2a`（v1.0 JSON-RPC + AgentCard，JWT，contextId 多轮）为备用通道。鉴权同源 Casdoor——实测契约（INF-2 核验 2026-09-20）：`roles` 为对象数组、角色名取元素内 `name`（顶层 `name`=用户名），`owner`=组织即租户，JWKS 端点以 OIDC discovery 为准（`/.well-known/jwks`，无 `.json` 后缀；坑#19）。

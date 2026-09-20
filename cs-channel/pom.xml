@@ -25,6 +25,11 @@
       <groupId>com.enterprise</groupId>
       <artifactId>cs-conversation</artifactId>
     </dependency>
+    <!-- M0批4：orchestration 轮次引擎经本模块适配器接入（ChatTurnPort 实现，条件装配切换 echo 桩） -->
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-orchestration</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>

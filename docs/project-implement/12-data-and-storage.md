@@ -1,6 +1,6 @@
 # 12 · 数据模型与存储选型
 
-> 最后更新:2026-09-20 · v1.2.0(M0批2：迁移落位约定与 RLS 执行角色落地形态) · v1.1.0(终审：补备份与恢复策略) · v1.0.0(初版) ｜ 依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j
+> 最后更新:2026-09-20 · v1.3.0(M0批4：V3 cs_session_event 落位) · v1.2.0(M0批2：迁移落位约定与 RLS 执行角色落地形态) · v1.1.0(终审：补备份与恢复策略) · v1.0.0(初版) ｜ 依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j
 
 ## 1. 存储分工总表
 
@@ -118,3 +118,6 @@ CREATE POLICY tenant_isolation ON cs_session
 ## 8. 修订注记
 
 - v1.0.0（2026-09-20）：初版。
+- v1.1.0（2026-09-20）：终审——补备份与恢复策略（全量+WAL，M4 DR-5）。
+- v1.2.0（2026-09-20）：M0批2——迁移落位约定（cs-infra classpath:db/migration 唯一落位）与 RLS 执行角色（cs_app NOLOGIN，ops 置密）落地形态。
+- v1.3.0（2026-09-20）：M0批4——`V3__cs_session_event.sql` 落位（事件溯源主表：id/session_id/seq/event_type/payload jsonb/trace_id/occurred_at；(session_id,seq) 唯一；RLS 经会话子查询同 cs_turn）。M0批4 落 ROUTE_DECIDED / MESSAGE_APPENDED 两类事件；trace_id 由 M0批5 观测批次回填；月分区待 M1 数据起量实施。

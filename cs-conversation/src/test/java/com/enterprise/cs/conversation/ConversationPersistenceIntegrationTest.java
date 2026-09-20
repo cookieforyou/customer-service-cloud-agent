@@ -3,11 +3,14 @@ package com.enterprise.cs.conversation;
 import com.enterprise.cs.conversation.domain.Message;
 import com.enterprise.cs.conversation.domain.MessageRepository;
 import com.enterprise.cs.conversation.domain.Session;
+import com.enterprise.cs.conversation.domain.SessionEventRepository;
 import com.enterprise.cs.conversation.domain.SessionRepository;
+import com.enterprise.cs.conversation.domain.TurnRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -22,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,6 +61,18 @@ class ConversationPersistenceIntegrationTest {
     private MessageRepository messages;
 
     @Autowired
+    private TurnRepository turns;
+
+    @Autowired
+    private SessionEventRepository events;
+
+    @Autowired
+    private com.enterprise.cs.conversation.api.ConversationPort conversation;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
     private PlatformTransactionManager txManager;
 
     @Test
@@ -78,6 +94,60 @@ class ConversationPersistenceIntegrationTest {
         assertThat(messages.existsByTenantIdAndChannelAndChannelMsgId("t-a", "webchat", "m-1")).isTrue();
         assertThat(messages.findByTenantIdAndChannelAndChannelMsgId("t-a", "webchat", "m-1"))
                 .hasValueSatisfying(m -> assertThat(m.getContent()).isEqualTo("你好"));
+    }
+
+    /** M0批4：V3 事件表迁移 + 轮次生命周期（start/finish）+ 窗口读拼（排除当前消息、旧→新）。 */
+    @Test
+    void turnLifecyclePersistsAndWindowReadAssembles() {
+        UUID sessionId = UUID.randomUUID();
+        sessions.saveAndFlush(new Session(sessionId, "t-a", "webchat", "v-1", "ACTIVE", Instant.now()));
+        UUID inboundId = UUID.randomUUID();
+        messages.saveAndFlush(new Message(inboundId, sessionId, null, 1, "USER", "TEXT",
+                "退款怎么办理", "t-a", "webchat", "c-turn-1", Instant.now()));
+
+        UUID turnId = UUID.randomUUID();
+        conversation.startTurn(new com.enterprise.cs.conversation.api.ConversationPort.StartTurnCmd(
+                sessionId, turnId, inboundId, "T1", "{\"decision\":\"direct\",\"tier\":\"T1\"}"));
+
+        assertThat(turns.findById(turnId)).hasValueSatisfying(t -> {
+            assertThat(t.getState()).isEqualTo("RUNNING");
+            assertThat(t.getSeq()).isEqualTo(1);
+            assertThat(t.getModelTier()).isEqualTo("T1");
+            assertThat(t.getRouteDecision()).contains("direct");
+        });
+        assertThat(messages.findById(inboundId)).hasValueSatisfying(m -> assertThat(m.getTurnId()).isEqualTo(turnId));
+
+        UUID aiId = conversation.finishTurn(new com.enterprise.cs.conversation.api.ConversationPort.FinishTurnCmd(
+                turnId, "COMPLETED", 11, 7, 12, "退款会在1-3个工作日原路退回"));
+
+        assertThat(turns.findById(turnId)).hasValueSatisfying(t -> {
+            assertThat(t.getState()).isEqualTo("COMPLETED");
+            assertThat(t.getTokensIn()).isEqualTo(11);
+            assertThat(t.getTokensOut()).isEqualTo(7);
+            assertThat(t.getLatencyMs()).isEqualTo(12);
+        });
+        assertThat(messages.findById(aiId)).hasValueSatisfying(m -> {
+            assertThat(m.getRole()).isEqualTo("AI");
+            assertThat(m.getContent()).isEqualTo("退款会在1-3个工作日原路退回");
+            assertThat(m.getTurnId()).isEqualTo(turnId);
+            assertThat(m.getTenantId()).isEqualTo("t-a");
+        });
+
+        List<String> eventTypes = jdbc.queryForList(
+                "SELECT event_type FROM cs_session_event WHERE session_id = ? ORDER BY seq",
+                String.class, sessionId);
+        assertThat(eventTypes).containsExactly("ROUTE_DECIDED", "MESSAGE_APPENDED");
+
+        // 第二轮：窗口读拼排除当前入站消息，旧→新含第一轮 user+AI
+        UUID inbound2 = UUID.randomUUID();
+        messages.saveAndFlush(new Message(inbound2, sessionId, null, 3, "USER", "TEXT",
+                "多久到账", "t-a", "webchat", "c-turn-2", Instant.now()));
+        var window = conversation.recentWindow(sessionId, 10, inbound2);
+        assertThat(window).hasSize(2);
+        assertThat(window.get(0).role()).isEqualTo("USER");
+        assertThat(window.get(0).content()).isEqualTo("退款怎么办理");
+        assertThat(window.get(1).role()).isEqualTo("AI");
+        assertThat(window.get(1).content()).isEqualTo("退款会在1-3个工作日原路退回");
     }
 
     @Test

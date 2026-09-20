@@ -10,4 +10,36 @@
   </parent>
   <artifactId>cs-orchestration</artifactId>
   <name>CSCA :: orchestration</name>
+  <description>编排引擎——Agent 运行时、TurnPlan 执行、意图路由、主编排 supervisor</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-commons</artifactId>
+    </dependency>
+    <!-- RoutingChatModel/ModelTier（《04》§4）；轮次生命周期落库由 channel 侧适配器经 conversation 驱动（模块白名单） -->
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-ai-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-client-chat</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

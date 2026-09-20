@@ -4,15 +4,16 @@ import com.enterprise.cs.channel.api.FrameSink;
 import tools.jackson.databind.json.JsonMapper;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Component;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 import java.util.ArrayDeque;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 会话帧总线（《08》§4/§5）：按会话维护帧序号、有界补发缓冲（256，《12》§3）与热订阅。
@@ -85,22 +86,53 @@ public class SessionFrameBus {
         };
     }
 
-    /** 订阅会话流：先补发 afterId 之后的缓冲帧，再接入热流。 */
+    /**
+     * 订阅会话流：先补发 afterId 之后的缓冲帧，再接入热流。
+     * computeIfAbsent：合法时序为「先订阅、后发首条消息」（Widget/EventSource 均如此）——
+     * 订阅时无轮次则建空流保持挂起，直至首帧/DONE/ERROR；返回 empty 会令客户端连接即关、
+     * EventSource 重连循环（M0批4 集成测试实证修正）。
+     * 桥接（Flux.create + buffer 锁内先重放再挂热订阅，按 id 去重）：消除「快照与热订阅挂接
+     * 之间」的缝隙丢帧——该窗口内发射的帧既不在重放快照、又因 directBestEffort 无订阅者而被丢
+     * （M0批4 集成测试实证修正）；DONE/ERROR 完成热流，多轮会话由客户端 Last-Event-ID 重连续接。
+     */
     public Flux<ServerSentEvent<String>> subscribe(UUID sessionId, long afterId) {
-        SessionStream s = streams.get(sessionId);
-        if (s == null) {
-            return Flux.empty();
-        }
-        List<Frame> replay;
-        synchronized (s.buffer) {
-            replay = s.buffer.stream().filter(f -> f.id() > afterId).toList();
-        }
-        return Flux.concat(Flux.fromIterable(replay), s.sink.asFlux().filter(f -> f.id() > afterId))
-                .map(f -> ServerSentEvent.<String>builder()
-                        .id(Long.toString(f.id()))
-                        .event(f.event())
-                        .data(f.data())
-                        .build());
+        SessionStream s = streams.computeIfAbsent(sessionId, id -> new SessionStream());
+        return Flux.create(emitter -> {
+            final long[] last = {afterId};
+            final AtomicReference<Disposable> hot = new AtomicReference<>();
+            synchronized (s.buffer) {
+                for (Frame f : s.buffer) {
+                    if (f.id() > afterId) {
+                        last[0] = f.id();
+                        emitter.next(toSse(f));
+                    }
+                }
+                hot.set(s.sink.asFlux().subscribe(
+                        frame -> {
+                            long id = frame.id();
+                            if (id > last[0]) {
+                                last[0] = id;
+                                emitter.next(toSse(frame));
+                            }
+                        },
+                        emitter::error,
+                        emitter::complete));
+            }
+            emitter.onDispose(() -> {
+                Disposable d = hot.get();
+                if (d != null) {
+                    d.dispose();
+                }
+            });
+        });
+    }
+
+    private static ServerSentEvent<String> toSse(Frame f) {
+        return ServerSentEvent.<String>builder()
+                .id(Long.toString(f.id()))
+                .event(f.event())
+                .data(f.data())
+                .build();
     }
 
     private void emit(SessionStream s, String event, Object payload) {
