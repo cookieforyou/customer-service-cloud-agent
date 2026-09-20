@@ -107,7 +107,7 @@ Controller(MVC, 虚拟线程) 返回 Flux<ServerSentEvent<Frame>>
 
 ### 6.1 Server（把平台 Agent 暴露给企业其他系统）
 - 暴露 `main_supervisor` 能力面：AgentCard `GET /.well-known/agent-card.json`（JWT 保护、Cache-Control+ETag），skills：`cs_qa`（客服问答）、`cs_ticket`（工单受理）；端点 `POST /a2a`（A2A v1.0 JSON-RPC，同步 SendMessage；能力位声明 `streaming:false, pushNotifications:false`——与知识服务同水位）。
-- 实现路径：M2 spike `spring-ai-community/spring-ai-a2a`（`spring.ai.a2a.server.enabled=true`，AgentCard/AgentExecutor bean 装配）；spike 判据：鉴权可挂 Spring Security、超时可控、无阻塞性缺陷。不通过则按知识服务已验证的自研协议层形态实现（Controller + IdentityGuard + RateLimiter + AuditRecorder 四件套，消息契约对齐其集成指南）。
+- 实现路径：M2 spike `spring-ai-community/spring-ai-a2a`（`spring.ai.a2a.server.enabled=true`，AgentCard/AgentExecutor bean 装配）；spike 判据：鉴权可挂 Spring Security、超时可控、无阻塞性缺陷。不通过则按知识服务已验证的自研协议层形态实现（Controller + IdentityGuard + RateLimiter + AuditRecorder 四件套，消息契约对齐其集成指南）。**风险提示：姊妹项目已实证 a2a-java SDK 桥接因 Quarkus/CDI 绑定不适配 Spring 栈（spike 判负，坑#02），spring-ai-a2a 底层同为该 SDK——自研预案为高概率路径，M2 决策点 D-M2-1 见 progress M2 卷。**
 - 多轮延续：`contextId` → 映射平台会话（`a2a-{contextId}`，TTL 24h，对齐知识服务语义）。
 
 ### 6.2 Client（消费远端 Agent）

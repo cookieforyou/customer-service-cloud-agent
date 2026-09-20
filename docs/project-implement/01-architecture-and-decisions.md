@@ -116,7 +116,7 @@ sequenceDiagram
 | D-03 | 模型接入 = OpenAI 兼容多厂商 + 自研 `RoutingChatModel` 分级路由 | Spring AI 无官方 fallback/路由抽象（已核验）；厂商全 OpenAI 兼容使接入语言中立 | 已决策 |
 | D-04 | 编排 = 自研轻量编排引擎，不引入 LangGraph4j / 硬依赖 spring-ai-session | LangGraph4j 单人维护（bus factor）；spring-ai-session 0.8.0 pre-1.0；客服域编排模式收敛（路由/链/并行/生成-校验），Anthropic《Building Effective Agents》五模式够用 | 已决策 |
 | D-05 | 知识集成 = MCP 工具化为主通道，A2A 为备用/互操作通道 | Agentic retrieval（编排层决定何时检索）为 2025-2026 共识；MCP 面向 Agent→工具，A2A 面向 Agent↔Agent（跨系统互操作） | 已决策 |
-| D-06 | 对外互操作 = A2A v1.0；spike `spring-ai-a2a` 社区模块，不满足则按知识服务已验证的自研协议层形态落地 | 社区模块孵化中（47★，无正式 release 包）；知识服务已有成熟自研 A2A 协议层先例（AgentCard + JSON-RPC SendMessage + JWT） | 已决策 |
+| D-06 | 对外互操作 = A2A v1.0；spike `spring-ai-a2a` 社区模块，不满足则按知识服务已验证的自研协议层形态落地 | 社区模块孵化中（47★，无正式 release 包）；知识服务已有成熟自研 A2A 协议层先例（AgentCard + JSON-RPC SendMessage + JWT）；**姊妹项目已实证 a2a-java SDK 桥接因 Quarkus/CDI 绑定不适配 Spring 栈（spike 判负，坑#02），自研预案权重上调** | 已决策 |
 | D-07 | 流式 = SSE（WebMVC + 虚拟线程，Controller 返回 Flux 适配）；坐席工作台用 WebSocket（双向） | SSE 是 LLM 流式事实标准；仅坐席台需要双向实时 | 已决策 |
 | D-08 | 可观测 = OTel 语义约定 + 双后端（Jaeger 工程排障 / Langfuse 质量运营），Langfuse 自托管随平台新增部署 | Langfuse 承载 prompt 管理/评测/标注闭环；复用 Jaeger+Prometheus+Grafana 既有监控形态（与知识服务运维同构） | 已决策 |
 | D-09 | 评测 = promptfoo 为主回归（HTTP provider，语言中立）+ Python 侧车（Ragas/DeepEval）仅调优期 | 避免 Java 团队双 CI 体系；深度 RAG 指标按需启用侧车 | 已决策 |
@@ -130,7 +130,14 @@ sequenceDiagram
 | D-17 | 高危工具 L2 = 100% 人工审批（完整参数载荷展示），配 per-session/per-tenant 配额与金额阈值 | 过度代理（LLM06）是客服最致命风险；审批必须「批的是完整 payload」 | 已决策 |
 | D-18 | 合规 = 按企业内部使用路线（免大模型备案）设计，但合规模块（AI 标识/违规计数/题库门禁/审计留存）按公众服务标准建设，预留对外开关 | GB/T 45654-2025 量化指标作为上线门禁照建；内部使用可免备案但监管趋势要求同水位 | 已决策 |
 
-## 6. 已核验事实与待源码核验清单
+## 6. ADR 生命周期与决策纪律
+
+- **状态机**：`提案 → 已定案（用户确认）/ 已决策（本文档定案，可经回写流程推翻）→ 已否决（必须附重估触发条件，如「多节点部署时重估 K8s」）`。
+- **定案记录格式**：决策详表（选项/形态/依据，推荐项加粗置首）落对应里程碑卷 §5，底部 `> 定案记录(日期 拍板人): Dx=…`；本文 ADR 表只维护结论行。
+- **spike 纪律**：技术验证类决策先 spike、后拍板；判负必须留档（判据、失败证据、回落路径），提交信息与 M 卷决策点同步（先例：姊妹项目 a2a-java SDK spike 判负回落自研）。
+- 推进纪律总纲见 `docs/project-progress/PROJECT-PROGRESS.md` §3。
+
+## 7. 已核验事实与待源码核验清单
 
 按 AGENTS.md 落码纪律（先核验再落码），以下 Spring AI 2.0 事实**已经官方文档核验**，可直接引用：
 
@@ -151,11 +158,11 @@ sequenceDiagram
 | V-01 | MCP client streamable-http 连接注入 `Authorization` 头的配置形态 | MCP Java SDK 2.0.x / Spring AI 2.0.1 autoconfigure 源码 |
 | V-02 | `spring.ai.tools.limits.*` 配置键实际名称与默认值 | spring-ai-tools 模块 |
 | V-03 | MVC 下 Controller 返回 `Flux` 的 SSE 适配行为与心跳控制 | Spring Framework 7 |
-| V-04 | `spring-ai-a2a` server autoconfigure 实际能力（M2 spike） | spring-ai-community 仓库 |
+| V-04 | `spring-ai-a2a` server autoconfigure 实际能力（M2 spike） | spring-ai-community 仓库（注意：其底层 a2a-java SDK 有 Spring 适配判负先例，坑#02） |
 | V-05 | Langfuse OTLP 集成细节（`ObservationFilter` 注入 `gen_ai.prompt/completion`、`langfuse.*` 属性） | Langfuse 官方 Spring AI 指南 + 样例工程 |
 | V-06 | Milvus starter 元数据过滤表达式对 tenant_id 过滤的下推行为 | spring-ai-vector-store-milvus |
 
-## 7. 演进原则
+## 8. 演进原则
 
 1. **协议化解耦**：模型（OpenAI 兼容）、工具（MCP）、Agent 互操作（A2A）、观测（OTLP）全部走开放协议，任何一层替换为异构实现（如 Python 组件）都是局部手术。
 2. **从最简模式开始**（Anthropic 忠告）：编排从 Routing 起步，仅当可证明收益时引入 Orchestrator-Workers 等复杂度；多 Agent token 成本约为普通对话 15 倍，专职 Agent 派生必须节制。

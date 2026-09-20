@@ -44,7 +44,8 @@ merge(main) → sit 自动部署 → 冒烟(eval 子集)
 ```
 
 - 工具：GitHub Actions（或等价 CI）；promptfoo 固定版本 + 结果缓存复放控成本。
-- 提交规范（AGENTS.md）：`feat/fix/docs/refactor(scope): 中文摘要` + 正文要点；一功能一提交（代码+文档同批）。
+- 提交规范（AGENTS.md）：`feat/fix/docs/refactor(scope): 中文摘要` + 正文要点；一功能一提交（代码+文档同批）；**提交信息带推进锚点**（里程碑批号 `M<N>批<y>` 与坑号 `坑#xx`，与进度卷/坑位台账互查）。
+- 分支纪律：默认 main 小步快跑；涉用户 E2E 复跑窗口的大批次开 `m<N>-b<y>-<slug>` 短分支，销账合入（防复跑窗口基线漂移，姊妹项目验证过的形态）。
 
 ## 5. 质量门禁数值
 
