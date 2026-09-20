@@ -1,6 +1,6 @@
 # 01 · 总体架构与关键决策
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版（基于 2026-09 三路 Web 调研：Spring AI 2.0 官方实践 / 2026 客服 Agent 平台参考架构 / 评测可观测安全合规落地）
+> 最后更新:2026-09-20 · v1.1.0(终审：新增核验点 V-07——MCP 按工具超时覆盖) · v1.0.0(初版：基于 2026-09 三路 Web 调研——Spring AI 2.0 官方实践 / 2026 客服 Agent 平台参考架构 / 评测可观测安全合规落地)
 
 ## 1. 产品定位与范围
 
@@ -161,6 +161,7 @@ sequenceDiagram
 | V-04 | `spring-ai-a2a` server autoconfigure 实际能力（M2 spike） | spring-ai-community 仓库（注意：其底层 a2a-java SDK 有 Spring 适配判负先例，坑#02） |
 | V-05 | Langfuse OTLP 集成细节（`ObservationFilter` 注入 `gen_ai.prompt/completion`、`langfuse.*` 属性） | Langfuse 官方 Spring AI 指南 + 样例工程 |
 | V-06 | Milvus starter 元数据过滤表达式对 tenant_id 过滤的下推行为 | spring-ai-vector-store-milvus |
+| V-07 | MCP client 按工具差异化超时覆盖能力（全局 `request-timeout` 能否被单工具覆盖；不能则经 ToolCallback 包装层实现，《06》§3） | MCP Java SDK 2.0.x ToolCallback 封装层 |
 
 ## 8. 演进原则
 

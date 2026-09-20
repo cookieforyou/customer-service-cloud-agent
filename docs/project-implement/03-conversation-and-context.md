@@ -1,6 +1,6 @@
 # 03 · 会话与上下文工程
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-04/D-07/D-13，《02》会话上下文。
+> 最后更新:2026-09-20 · v1.1.0(终审：Advisor 装配钉序纪律，防自动注册顺序陷阱) · v1.0.0(初版) ｜ 依赖《01》D-04/D-07/D-13，《02》会话上下文
 
 ## 1. 领域模型
 
@@ -92,6 +92,8 @@ order 小者先处理请求、后处理响应（栈式）。**本表为全平台
 | 900 | `OutputModerationStreamAdvisor` | **流式**分段送审（`llm_response_moderation`，按句/固定 token 窗缓冲，「已通过前缀」才透出），命中截断+兜底话术 | ai-core |
 | 950 | `PiiOutboundAdvisor` | 出站 PII 扫描（出站比入站严格：拦截而非脱敏） | ai-core |
 | 990 | `StructuredOutputAdvisor` | 仅结构化任务链路（意图分类/槽位抽取）启用 `StructuredOutputValidationAdvisor`（不支持流式，走 `call()`） | Spring AI 内建 |
+
+- **装配纪律（防顺序陷阱，终审补）**：官方 `ToolCallingAdvisor` 自动注册的默认 order 为 `HIGHEST_PRECEDENCE+300`，与上表相对整数混排会插到队首、击穿护栏链序——装配时以 `spring.ai.chat.client.tool-calling.enabled=false`（或调用侧 `AdvisorParams.toolCallingAdvisorAutoRegister(false)`）关闭自动注册，**全部 Advisor 显式构造、按上表钉序注入**；本表顺序值即装配时的唯一事实源。
 
 注：`MessageChatMemoryAdvisor`（官方）不使用——记忆职责由自研 `SessionMemoryAdvisor` 承担（§3.1 理由）。
 

@@ -23,5 +23,5 @@
 - **形态**：模块化单体——Maven 多模块（cs-commons/infra/ai-core/conversation/knowledge/tooling/orchestration/collaboration/channel/eval/admin/api）+ ArchUnit 边界 + Spring Modulith 事件注册表；基础包 `com.enterprise.cs`；prod 端口 8100（与知识服务 8090 同 ECS 共存）。
 - **权威设计**：`docs/project-implement/`（README 总目录 + 01-15）。Advisor 链序唯一权威定义在《03》§4；指标口径（Contained/Verified Resolution 等）唯一权威在《09》§1；ADR 决策记录 D-01~D-18 与生命周期纪律在《01》§5/§6；实证坑位台账在《15》（预置继承 12 条）。进度族结构（索引 + 00 状态行卷 + M0~M4 里程碑卷 + 用户侧清单）见 `docs/project-progress/PROJECT-PROGRESS.md`。
 - **关键外部契约**：知识服务（corporate-knowledge-base-rag-agent，已上线）MCP `POST /mcp`（工具 search/get_document/ask，JWT，限流 120/60s/租户）为主通道；A2A `POST /a2a`（v1.0 JSON-RPC + AgentCard，JWT，contextId 多轮）为备用通道。鉴权同源 Casdoor。
-- **落码前必核验**：设计文档中标注 V-01~V-06 的 API/配置点（MCP client 鉴权头注入、tools.limits 键名、MVC+Flux SSE、spring-ai-a2a 成熟度、Langfuse ObservationFilter、Milvus 过滤下推），先源码核验再落码（纪律 6 的具体化清单）。
+- **落码前必核验**：设计文档中标注 V-01~V-07 的 API/配置点（MCP client 鉴权头注入、tools.limits 键名、MVC+Flux SSE、spring-ai-a2a 成熟度、Langfuse ObservationFilter、Milvus 过滤下推、MCP 按工具超时覆盖），先源码核验再落码（纪律 6 的具体化清单）。
 - **新增 infra**（M0/M1 落位）：OTel Collector+Jaeger+Prometheus/Grafana、Langfuse 自托管栈（+ClickHouse+MinIO）。

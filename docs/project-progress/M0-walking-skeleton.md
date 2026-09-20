@@ -14,7 +14,7 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 |---|---|---|
 | 批1 | 工程骨架：12 模块 Maven 树 + ArchUnit 六规则 + CI 流水线（build/unit/arch）+ 进度卷启用 | 全部（《02》） |
 | 批2 | 数据基线：Flyway 基线（cs_session/cs_turn/cs_message + RLS）+ Redis 键规范空实现 + Testcontainers 集成样板 | cs-domain/infra（《12》§2） |
-| 批3 | 认证与渠道：Casdoor JWT（访客/坐席/服务三身份）+ webchat REST+SSE 帧 v1 + 幂等去重 + 最小 Widget 页 | cs-channel/api（《08》《11》§7） |
+| 批3 | 认证与渠道：Casdoor JWT（访客/坐席/服务三身份）+ webchat REST+SSE 帧 v1 + 幂等去重 + 最小 Widget 页（无构建依赖原生 ESM 起步，正式前端技术栈 M1 复审定案） | cs-channel/api（《08》《11》§7） |
 | 批4 | 最小对话链：main_supervisor（代码内 prompt）+ RoutingChatModel 骨架（T1 直连）+ SessionMemoryAdvisor 雏形（窗口读拼） | cs-ai-core/orchestration/conversation（《04》《03》） |
 | 批5 | 观测与核验收口：OTel→Jaeger/Prometheus 出数（含根 span 属性）+ V-01~V-03 源码核验结论回写《01》§7 + E2E-M0-1 交付 | 全部（《10》） |
 

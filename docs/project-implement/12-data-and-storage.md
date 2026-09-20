@@ -1,6 +1,6 @@
 # 12 · 数据模型与存储选型
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j。
+> 最后更新:2026-09-20 · v1.1.0(终审：补备份与恢复策略) · v1.0.0(初版) ｜ 依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j
 
 ## 1. 存储分工总表
 
@@ -108,6 +108,8 @@ CREATE POLICY tenant_isolation ON cs_session
 | Langfuse(ClickHouse) | trace 20% 采样 ~2GB/月 | 90d（Scores 长期） |
 | ES 索引 | ~0.5GB/月 | 6 个月 |
 | 语义缓存/热态 | 常驻 <2GB | 自然过期 |
+
+**备份与恢复（终审补）**：PG 每日全量 + WAL 连续归档（ECS 本地 + 异机/对象存储双副本）；恢复演练 M4 DR-5（恢复到时间点验证，RPO/RTO 读数落档）。Langfuse ClickHouse/MinIO 与 ES 随平台同机备份策略覆盖（可重建数据仅留配置备份）。
 
 ## 8. 修订注记
 

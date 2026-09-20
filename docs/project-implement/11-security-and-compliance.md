@@ -1,6 +1,6 @@
 # 11 · 安全与合规
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链。
+> 最后更新:2026-09-20 · v1.1.0(终审：eval 端点访问面收紧 + 个人信息主体权利条款) · v1.0.0(初版) ｜ 依赖《01》D-10/D-12/D-13/D-17/D-18，《03》Advisor 链
 
 ## 1. 威胁模型：OWASP Top 10 for LLM Applications 2025 → 客服场景映射
 
@@ -66,7 +66,7 @@
 
 - 身份源：Casdoor（OAuth2/OIDC）。四类主体：终端用户（webchat 访客 JWT→可绑定业务账号）、坐席/管理员（RBAC：`AGENT/SUPERVISOR/ADMIN/SUPER_ADMIN`）、服务（client_credentials）、远端 Agent（A2A 调用方，scope 治理）。
 - 服务间（MCP/A2A）：JWT fail-closed 三层（有效性→身份 claim 完整性→可选 scope），对齐知识服务 `McpIdentityGuard` 已验证形态；本平台作为 MCP client 调 KB 用服务身份 + 会话租户透传（`ToolContext`）。
-- API 面：`/api/v1/chat/**`（访客 JWT）、`/api/v1/agent-console/**`（坐席）、`/api/v1/admin/**`（管理员，审计敏感操作二次确认）、`/a2a`+`/.well-known/agent-card.json`（JWT，不匿名公开——对齐知识服务纪律）。
+- API 面：`/api/v1/chat/**`（访客 JWT）、`/api/v1/agent-console/**`（坐席）、`/api/v1/admin/**`（管理员，审计敏感操作二次确认）、`/a2a`+`/.well-known/agent-card.json`（JWT，不匿名公开——对齐知识服务纪律）、`/api/v1/eval/**`（**服务身份，仅 sit/内网可达，禁公网暴露**——评测端点可钉 Agent/prompt 版本，属高权限面）。
 
 ## 8. GB/T 45654-2025 对齐（D-18）
 
@@ -78,6 +78,7 @@
 | 用户输入处置 | 违规计数与封禁策略（§5） |
 | 投诉举报渠道 | CSAT 帧附「投诉」入口 → 直建 `cs_ticket(type=COMPLAINT)` |
 | 日志与语料追溯 | 审计 append-only（180d+）+ trace 全链留痕（《10》§6） |
+| 个人信息主体权利 | admin 提供按用户导出/删除通道（删除后会话匿名化保留以维持指标口径，联动《12》§7 留存策略）——对齐 PIPL 数据主体权利要求 |
 | 备案路线 | 当前按企业内部使用（不面向公众）免大模型备案；对外开关预留（D-18）：开启后走「调用已备案模型 API 登记」路径，题库与安全评估材料已就绪 |
 
 ## 9. 红队与演练

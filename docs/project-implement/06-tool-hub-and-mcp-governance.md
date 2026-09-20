@@ -1,6 +1,6 @@
 # 06 · 工具中心与 MCP 治理
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-05/D-16/D-17，《04》Agent 白名单。
+> 最后更新:2026-09-20 · v1.1.0(终审：MCP 超时按工具覆盖能力挂 V-07 核验) · v1.0.0(初版) ｜ 依赖《01》D-05/D-16/D-17，《04》Agent 白名单
 
 ## 1. 工具注册表（cs-tooling）
 
@@ -41,7 +41,7 @@ transaction_agent 产出参数 → Evaluator-Optimizer 自检（schema+业务规
 |---|---|
 | 传输 | Streamable HTTP（`spring.ai.mcp.client.streamable-http.connections.<name>.url/endpoint`） |
 | 鉴权 | JWT（Casdoor，服务身份 client_credentials；租户上下文按调用的会话租户传递）；注入形态待 V-01 核验 |
-| 超时 | `request-timeout` 默认 20s 全局；KB 工具按《05》§1.1 覆盖（search/get_document 30s、ask 120s） |
+| 超时 | `request-timeout` 默认 20s 仅作全局兜底；KB 差异化超时（search/get_document 30s、ask 120s）优先经 ToolCallback 包装层实现，SDK 原生按工具覆盖能力待 V-07 核验后定型 |
 | 限流 | 本平台预扣 KB 侧限流的 80%（§自限令牌桶）；其他 MCP server 按 `cs_mcp_server.rate_limit` 独立令牌桶 |
 | 健康 | MCP initialize 级探测 30s 周期 → `cs_mcp_server.health_status`，熔断联动《05》§4 |
 | 工具入册 | 新工具必须先登记 `cs_tool_def`（含风险分级）方可被任何 Agent 引用；未登记的 MCP 工具在 ToolCallbackProvider 层过滤掉 |

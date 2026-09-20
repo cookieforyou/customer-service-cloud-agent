@@ -1,6 +1,6 @@
 # 02 · 模块划分与工程结构
 
-> 版本 v1.0.0 ｜ 2026-09-20 ｜ 初版。依赖《01》D-02（模块化单体）、D-12/D-13。
+> 最后更新:2026-09-20 · v1.1.0(终审：事件清单补 `SessionClosed`——ES 会话索引投递的事件源缺口) · v1.0.0(初版) ｜ 依赖《01》D-02（模块化单体）、D-12/D-13
 
 ## 1. 限界上下文（Bounded Context）
 
@@ -97,6 +97,7 @@ cs-admin ─→ 各模块 api（只读/配置类操作为主）
 | `FaqUpdated` | knowledge | knowledge(自) / ai-core | faqId, tenantId | 语义缓存失效 |
 | `PromptVersionActivated` | admin | ai-core | promptKey, label(production/canary) | 运行时刷新 |
 | `ContentPolicyViolated` | ai-core | admin / collaboration | sessionId, layer(INPUT/OUTPUT), action | 违规计数与处置 |
+| `SessionClosed` | conversation | knowledge / evaluation / admin | sessionId, closeReason, resolutionType?, csat? | ES 会话索引投递（《12》§4）、口径终判与统计、缺口信号源 |
 
 事件版本化：载荷新增字段向后兼容；破坏性变更新建 `V2` 事件类，旧事件保留一个迁移窗口。
 
