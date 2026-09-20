@@ -10,4 +10,43 @@
   </parent>
   <artifactId>cs-conversation</artifactId>
   <name>CSCA :: conversation</name>
+  <description>会话与上下文：会话状态机、事件溯源、三层记忆组装、澄清与超时唤醒</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-commons</artifactId>
+    </dependency>
+    <!-- 业务模块允许依赖 cs-infra（《02》§4）；迁移资源（classpath:db/migration）随本依赖进入测试类路径 -->
+    <dependency>
+      <groupId>com.enterprise</groupId>
+      <artifactId>cs-infra</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

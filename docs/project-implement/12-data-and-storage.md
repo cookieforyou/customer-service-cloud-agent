@@ -1,6 +1,6 @@
 # 12 · 数据模型与存储选型
 
-> 最后更新:2026-09-20 · v1.1.0(终审：补备份与恢复策略) · v1.0.0(初版) ｜ 依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j
+> 最后更新:2026-09-20 · v1.2.0(M0批2：迁移落位约定与 RLS 执行角色落地形态) · v1.1.0(终审：补备份与恢复策略) · v1.0.0(初版) ｜ 依赖《01》D-11/D-13。INFRA 现状：ECS 已部署 PG(with vector)/Redis Stack/ES/Milvus/Neo4j
 
 ## 1. 存储分工总表
 
@@ -13,7 +13,10 @@
 | **Neo4j** | 图谱（M2+）：缺口问题同义聚类、故障排查树（问题-原因-方案） | 不承载交易/会话数据，只读分析用途 |
 | **MinIO**（既有，复用） | 消息附件对象存储；备份异机副本目标（《12》§7） | 不做业务事实源 |
 
-## 2. PostgreSQL 模式（Flyway 管理，`V{n}__cs_*.sql`）
+## 2. PostgreSQL 模式（Flyway 管理，`V{n}__<上下文>_<主题>.sql`）
+
+- **迁移落位约定（M0批2 落地）**：全部 Flyway 迁移集中 `cs-infra/src/main/resources/db/migration`（单历史表 `flyway_schema_history`，由 `spring-boot-starter-flyway` + `flyway-database-postgresql` 装配——Boot BOM 管版，数据库模块缺失即 "Unsupported Database" 启动失败，姊妹项目 Boot #49012 实证）；文件名 `V{n}__<上下文>_<主题>.sql`（如 `V1__conversation_session_baseline`），模块拆分时按上下文前缀切分。
+- **RLS 执行形态（M0批2 落地）**：策略 fail-closed（`current_setting('cs.tenant_id', true)` 未设置即读空/写拒）+ `ENABLE/FORCE ROW LEVEL SECURITY`；应用执行角色 `cs_app`（NOLOGIN 基线，V2 建立 + 表授权 + 默认权限，迁移历史表回收权），生产登录口令由运维 `ALTER ROLE` 配置（部署手册，不落库）；应用侧按请求在事务连接上 `SET LOCAL cs.tenant_id`（坑#14：GUC 与数据语句必须同连接）。
 
 ### 2.1 表清单（域前缀对应《02》上下文）
 

@@ -10,4 +10,23 @@
   </parent>
   <artifactId>cs-infra</artifactId>
   <name>CSCA :: infra</name>
+  <description>技术基础设施适配：PG 连接与 Flyway 迁移（唯一迁移落位，上下文前缀命名）、存储客户端、外部系统客户端、观测装配</description>
+
+  <dependencies>
+    <!-- 迁移唯一落位（M0批2，《12》§2 落位约定）：单历史表，文件名 V{n}__<上下文>_<主题>.sql -->
+    <!-- Flyway 10+ 数据库模块须显式声明（缺失即 "Unsupported Database: PostgreSQL" 启动失败，Boot #49012 / 姊妹项目实证） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-flyway</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
 </project>

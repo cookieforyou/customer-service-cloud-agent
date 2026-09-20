@@ -1,0 +1,5 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Schema 唯一来源 = Flyway（V1/V2），Hibernate 仅校验
+    open-in-view: false

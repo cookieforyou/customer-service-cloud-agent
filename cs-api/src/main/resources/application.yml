@@ -2,6 +2,20 @@ spring:
   application:
     name: cs-api
 
+  # PG 直连 ECS 既有实例（环境注入；本地/Testcontainers 场景由 @ServiceConnection 覆盖）
+  datasource:
+    url: ${CS_DB_URL:jdbc:postgresql://localhost:5432/cs_dev}
+    username: ${CS_DB_USER:cs_dev}
+    password: ${CS_DB_PASSWORD:cs_dev}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Schema 唯一来源 = Flyway（《13》§2），Hibernate 仅校验
+    open-in-view: false
+
+  flyway:
+    enabled: true          # 迁移唯一落位 cs-infra: classpath:db/migration（《12》§2 落位约定）
+
 server:
   # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8，部署形态 M0批5 落地）
   port: 8081
