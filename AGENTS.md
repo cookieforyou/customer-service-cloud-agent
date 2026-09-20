@@ -16,6 +16,7 @@
 12. **E2E 交付唯一源**：需用户执行/确认的事项全部登记 `docs/project-progress/用户侧待执行项清单.md`（INF/E2E/DR/LT/SEC 代号制，只增不改）；回传后销账记录三点联动（清单 / M 卷任务行 / 00 状态行）
 13. **进度卷纪律**：状态行只放「读数+结论+指针」，过程细节写任务行；大卷勿整读整写（按任务行定位），单卷 >20KB 即拆分；大范围探索委派只读子代理
 14. **决策纪律**：重大技术决策用「选项表+定案记录（日期/拍板人）」落对应 M 卷 §5；spike 判负必须留档回落路径；被否决方案必须带重估触发条件
+15. **阶段批次标注纪律**：代码注释与文档中标明阶段/批次必须写全称（如「M0批1」「M2批3」），禁止裸「批x」（跨文档/跨里程碑引用有歧义）；提交信息同样遵守
 
 ## 架构事实（同步自 docs/project-implement v1.0.0，2026-09-20）
 
@@ -24,4 +25,4 @@
 - **权威设计**：`docs/project-implement/`（README 总目录 + 01-15）。Advisor 链序唯一权威定义在《03》§4；指标口径（Contained/Verified Resolution 等）唯一权威在《09》§1；ADR 决策记录 D-01~D-18 与生命周期纪律在《01》§5/§6；实证坑位台账在《15》（预置继承 12 条）。进度族结构（索引 + 00 状态行卷 + M0-M4 里程碑卷 + 用户侧清单）见 `docs/project-progress/PROJECT-PROGRESS.md`。
 - **关键外部契约**：知识服务（corporate-knowledge-base-rag-agent，已上线）MCP `POST /mcp`（工具 search/get_document/ask，JWT，限流 120/60s/租户）为主通道；A2A `POST /a2a`（v1.0 JSON-RPC + AgentCard，JWT，contextId 多轮）为备用通道。鉴权同源 Casdoor。
 - **落码前必核验**：设计文档中标注 V-01~V-07 的 API/配置点（MCP client 鉴权头注入、tools.limits 键名、MVC+Flux SSE、spring-ai-a2a 成熟度、Langfuse ObservationFilter、Milvus 过滤下推、MCP 按工具超时覆盖），先源码核验再落码（纪律 6 的具体化清单）。
-- **新增 infra**（M0/M1 落位）：OTel Collector+Jaeger+Prometheus/Grafana、Langfuse 自托管栈（+ClickHouse+MinIO）。
+- **infra 复用**（2026-09-20 环境事实）：Prometheus/Grafana/Jaeger/Langfuse 复用 kb-rag-agent 既有 ECS 实例（CSCA 以独立 scrape job / dashboard / Langfuse Project 隔离；自有轻量 OTel Collector 容器 fan-out）；ClickHouse/MinIO/Casdoor 均为既有；PG/Redis Stack/ES/Milvus/Neo4j 直连复用。无新增重型组件。

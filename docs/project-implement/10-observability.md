@@ -29,9 +29,9 @@ Spring AI 2.0 内建 observation (Micrometer)
 
 明文策略：`spring.ai.chat.observations.log-prompt/log-completion=true`（排障必需），但**导出前经 PII 脱敏过滤器**（§5）；工具参数/结果默认不打，`include-content` 仅 sit 环境开。
 
-## 3. Langfuse 自托管部署（新增 infra，M1）
+## 3. Langfuse 接入（2026-09-20 环境事实：复用既有实例，不新部署）
 
-- 形态：docker-compose（单 ECS 可承载中小规模；组件 = langfuse + worker + **ClickHouse** + **MinIO**（S3 兼容）+ 复用既有 PG/Redis）。生产参考官方 K8s/Helm，当前单机规模 compose 起步，容量预案见《14》风险表。
+- 形态：**复用 kb-rag-agent 已部署的自托管 Langfuse 实例**（同 ECS，ClickHouse/MinIO/PG/Redis 依赖组件均为既有）；CSCA 在实例内**新建独立 Project** 实现数据与权限隔离（独立 pk/sk、独立标注队列/datasets）。容量共享纳入监控；超限时按《14》风险表预案独立加栈。
 - 摄入：OTLP/HTTP `POST {langfuse}/api/public/otel/v1/traces`，Basic Auth（pk:sk），头 `x-langfuse-ingestion-version: 4`；**只收 traces 不收 logs/metrics**。
 - 已知坑（接入时逐条核验，对应 V-05）：
   1. 仅开 log-prompt 不够：需自定义 `ObservationFilter` 把 `gen_ai.prompt/completion` 写入 high-cardinality key-values，否则 Langfuse 输入输出为 null；

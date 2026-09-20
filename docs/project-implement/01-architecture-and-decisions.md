@@ -118,7 +118,7 @@ sequenceDiagram
 | D-05 | 知识集成 = MCP 工具化为主通道，A2A 为备用/互操作通道 | Agentic retrieval（编排层决定何时检索）为 2025-2026 共识；MCP 面向 Agent→工具，A2A 面向 Agent↔Agent（跨系统互操作） | 已决策 |
 | D-06 | 对外互操作 = A2A v1.0；spike `spring-ai-a2a` 社区模块，不满足则按知识服务已验证的自研协议层形态落地 | 社区模块孵化中（47★，无正式 release 包）；知识服务已有成熟自研 A2A 协议层先例（AgentCard + JSON-RPC SendMessage + JWT）；**姊妹项目已实证 a2a-java SDK 桥接因 Quarkus/CDI 绑定不适配 Spring 栈（spike 判负，坑#02），自研预案权重上调** | 已决策 |
 | D-07 | 流式 = SSE（WebMVC + 虚拟线程，Controller 返回 Flux 适配）；坐席工作台用 WebSocket（双向） | SSE 是 LLM 流式事实标准；仅坐席台需要双向实时 | 已决策 |
-| D-08 | 可观测 = OTel 语义约定 + 双后端（Jaeger 工程排障 / Langfuse 质量运营），Langfuse 自托管随平台新增部署 | Langfuse 承载 prompt 管理/评测/标注闭环；复用 Jaeger+Prometheus+Grafana 既有监控形态（与知识服务运维同构） | 已决策 |
+| D-08 | 可观测 = OTel 语义约定 + 双后端（Jaeger 工程排障 / Langfuse 质量运营） | Langfuse 承载 prompt 管理/评测/标注闭环；**复用 ECS 既有 Jaeger/Prometheus/Grafana/Langfuse 实例（CSCA 以独立 scrape job/dashboard/Langfuse Project 隔离），自有轻量 OTel Collector fan-out**（2026-09-20 环境事实更新） | 已决策 |
 | D-09 | 评测 = promptfoo 为主回归（HTTP provider，语言中立）+ Python 侧车（Ragas/DeepEval）仅调优期 | 避免 Java 团队双 CI 体系；深度 RAG 指标按需启用侧车 | 已决策 |
 | D-10 | 护栏 = Advisor 链内建分层护栏 + 阿里云内容安全流式分段送审（入站 query 审核 / 出站 response 审核） | 分层防御对标 OWASP LLM 2025 与分层护栏共识（输入→检索→生成→工具→输出） | 已决策 |
 | D-11 | 存储 = PG 业务主库 / Redis Stack 热态+语义缓存 / ES 检索 / Milvus 平台自有向量（FAQ、意图 few-shot）/ Neo4j 图谱（M2+ 缺口聚类与排查树） | 五存储各司其职，均有 ECS 现存实例 | 已决策 |

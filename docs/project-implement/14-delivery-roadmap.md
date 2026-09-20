@@ -2,16 +2,18 @@
 
 > 最后更新:2026-09-20 · v1.1.0(终审：M4 补备份恢复演练 DR-5；§0 补评测侧车) · v1.0.0(初版) ｜ 依赖全部前置文档；周数为相对工期（按 1~2 名资深 + 1~2 名中级工程师估算）
 
-## 0. 新增 INFRA 与依赖清单（需用户在 ECS 落位）
+## 0. INFRA 清单（2026-09-20 环境事实更新：以复用为主，无新增重型组件）
 
-| 项 | 用途 | 时点 |
-|---|---|---|
-| Langfuse 自托管栈（langfuse+worker+ClickHouse+MinIO，复用 PG/Redis） | 质量运营（trace/scores/prompt/标注） | M1 |
-| OTel Collector + Jaeger + Prometheus/Grafana | 工程观测（对齐知识服务既有形态，可复用其 compose 结构另起实例） | M0 |
-| Casdoor 应用注册（本平台 client + audience） | 认证 | M0 |
-| KB 服务 MCP/A2A 联调凭据（服务身份 + scope） | 知识集成 | M1 |
-| 阿里云内容安全（文本审核增强版）开通 | 合规护栏 | M1 |
-| Python 评测侧车（cs-eval-sidecar：FastAPI+Ragas/DeepEval） | 调优期深度检索指标（《09》§7） | 按需（M3+） |
+| 项 | 用途 | 时点 | 形态 |
+|---|---|---|---|
+| Prometheus / Grafana / Jaeger | 工程观测（指标/看板/trace） | M0 | **复用 kb-rag-agent 既有实例**：新增 CSCA 独立 scrape job、独立 dashboard、独立 service name 告警规则 |
+| OTel Collector（CSCA 自有轻量容器） | OTLP 接入与 fan-out（Jaeger+Langfuse 双后端，缓冲削峰） | M0 | 新增小容器（compose 资产 M0批5 交付） |
+| Langfuse | 质量运营（trace/scores/prompt/标注） | M1 | **复用既有自托管实例**：实例内新建 CSCA 独立 Project（独立 pk/sk，数据隔离）；容量共享监控 |
+| Casdoor | 认证 | M0 | 复用既有（新建应用注册，INF-2） |
+| PG / Redis Stack / ES / Milvus / Neo4j / MinIO | 存储 | M0起 | 直连复用；MinIO 承载消息附件与备份副本 |
+| KB 服务联调凭据（服务身份 + scope） | 知识集成 | M1 | INF-3 |
+| 阿里云内容安全（文本审核增强版）开通 | 合规护栏 | M1 | INF-4 |
+| Python 评测侧车（cs-eval-sidecar：FastAPI+Ragas/DeepEval） | 调优期深度检索指标（《09》§7） | 按需（M3+） | 新增小容器 |
 
 ## 1. 里程碑
 
@@ -47,7 +49,7 @@
 |---|---|---|---|
 | 模型供应商限流/故障 | 中 | 高 | 双供应商熔断路由（T1/T2 独立故障域，D-03）；语义缓存削峰；配额前置 |
 | `spring-ai-a2a` 不成熟（V-04） | 高 | 中 | spike 判据明确；**姊妹项目已实证 a2a-java SDK 桥接 Spring 栈判负（坑#02），自研协议层预案为高概率主路径**（M2 决策点 D-M2-1） |
-| Langfuse 栈占用 ECS 资源 | 中 | 中 | compose 起步限资源；容量预案；最坏降级为 OTel→Jaeger 单后端（Scores 走 PG `cs_eval_result`） |
+| Langfuse 栈占用 ECS 资源 | 中 | 中 | 复用既有实例按 Project 隔离（零新增组件）；容量共享纳入监控，超限时独立加栈（compose 形态预案保留）；最坏降级为 OTel→Jaeger 单后端（Scores 走 PG `cs_eval_result`） |
 | 单机容量上限 | 中 | 中 | 模块化单体资源占用可控；M3 压测给出垂直扩容与「按模块拆分」触发线（D-02 演进路径） |
 | OTel GenAI semconv 变更 | 高 | 低 | semconv 适配器单点收敛（《10》§1） |
 | 在线 judge 一致率不达标 | 中 | 中 | 分阶段：先只观测不处置，人标回流校准后再自动化（《09》§4） |

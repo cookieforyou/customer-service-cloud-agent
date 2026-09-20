@@ -14,12 +14,12 @@
 
 | 批 | 内容 | 涉及模块 |
 |---|---|---|
-| 批1 | 坐席域基础：技能组/坐席/队列（ZSET）/分配算法 v1 + WebSocket 工作台骨架 | cs-collaboration（《07》§2/§4） |
-| 批2 | 转人工全链：触发矩阵 + warm handoff（summary_agent）+ SLA 超时行为 + ESCALATION 帧 + 会话状态联动 | cs-conversation/collaboration（《07》§1/§3） |
-| 批3 | 工具中心：注册表 + MCP 治理属性 + 白名单三层求交 + 配额 + Mock 三工具 + invocation 审计 | cs-tooling（《06》） |
-| 批4 | L2 审批 + copilot：审批卡片（完整 payload）+ ApprovalDecided 事件 + copilot 三能力（推荐/话术/摘要）+ 工单预填 | cs-collaboration/tooling（《06》§2、《07》§5/§6） |
-| 批5 | 质量运营 v1：在线 judge（5 维度/抽样/Scores 回写）+ 校准流程启动（人工标注 200+）+ prompt canary（Langfuse label + 会话粘性切流） | cs-eval/ai-core（《09》§4/§5） |
-| 批6 | A2A：spring-ai-a2a spike（判据见《04》§6.1）→ 落地（SDK 或自研）+ AgentCard/JWT/限流 + 客户端备用通道复验 | cs-orchestration/knowledge（《04》§6） |
+| M2批1 | 坐席域基础：技能组/坐席/队列（ZSET）/分配算法 v1 + WebSocket 工作台骨架 | cs-collaboration（《07》§2/§4） |
+| M2批2 | 转人工全链：触发矩阵 + warm handoff（summary_agent）+ SLA 超时行为 + ESCALATION 帧 + 会话状态联动 | cs-conversation/collaboration（《07》§1/§3） |
+| M2批3 | 工具中心：注册表 + MCP 治理属性 + 白名单三层求交 + 配额 + Mock 三工具 + invocation 审计 | cs-tooling（《06》） |
+| M2批4 | L2 审批 + copilot：审批卡片（完整 payload）+ ApprovalDecided 事件 + copilot 三能力（推荐/话术/摘要）+ 工单预填 | cs-collaboration/tooling（《06》§2、《07》§5/§6） |
+| M2批5 | 质量运营 v1：在线 judge（5 维度/抽样/Scores 回写）+ 校准流程启动（人工标注 200+）+ prompt canary（Langfuse label + 会话粘性切流） | cs-eval/ai-core（《09》§4/§5） |
+| M2批6 | A2A：spring-ai-a2a spike（判据见《04》§6.1）→ 落地（SDK 或自研）+ AgentCard/JWT/限流 + 客户端备用通道复验 | cs-orchestration/knowledge（《04》§6） |
 
 ## 4. 任务清单
 
@@ -47,7 +47,7 @@
 | **A（预设推荐）** | 自研协议层（Controller+IdentityGuard+RateLimiter+AuditRecorder，契约对齐 KB 服务集成指南） | 姊妹项目同栈已 spike 判负 a2a-java SDK 桥接（Quarkus/CDI 绑定不适配 Spring），自研形态已上线验证；本平台同为 Spring 栈 |
 | B | `spring-ai-community/spring-ai-a2a` 自动装配 | 官方社区背书、装配省力；但孵化中（47★）、鉴权/超时可控性待证 |
 
-> 定案记录：待 M2 批6 首步 spike 后拍板（B 过判据则用 B，败则回落 A——回落路径已具备完整参照）。
+> 定案记录：待 M2批6 首步 spike 后拍板（B 过判据则用 B，败则回落 A——回落路径已具备完整参照）。
 
 ## 6. 验收标准（里程碑 DoD）
 
@@ -57,6 +57,6 @@
 
 | 轮次 | 代号 | 结论 | 跟进 |
 |---|---|---|---|
-| — | E2E-M2-1 转人工全链（待批2 交付） | 待交付 | — |
-| — | E2E-M2-2 L2 审批链（待批4 交付） | 待交付 | — |
-| — | E2E-M2-3 A2A 互操作（待批6 交付） | 待交付 | — |
+| — | E2E-M2-1 转人工全链（待M2批2 交付） | 待交付 | — |
+| — | E2E-M2-2 L2 审批链（待M2批4 交付） | 待交付 | — |
+| — | E2E-M2-3 A2A 互操作（待M2批6 交付） | 待交付 | — |

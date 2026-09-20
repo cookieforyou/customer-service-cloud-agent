@@ -8,18 +8,18 @@
 
 ## 2. 前置依赖（用户侧）
 
-INF-3 KB 服务联调凭据（MCP 连通性）；INF-4 阿里云内容安全开通；INF-5 Langfuse 栈部署（批6 前就位）。
+INF-3 KB 服务联调凭据（MCP 连通性）；INF-4 阿里云内容安全开通；INF-5 Langfuse 栈部署（M1批6 前就位）。
 
 ## 3. 批次规划（2026-09-20 定案，可经复盘调整）
 
 | 批 | 内容 | 涉及模块 |
 |---|---|---|
-| 批1 | 会话域完整：状态机 + 事件溯源 + 上下文组装（滚动摘要/槽位）+ 超时唤醒 + 并发轮锁 | cs-conversation（《03》） |
-| 批2 | 意图路由：L1 规则 + L2 T0 分类器 + Milvus `cs_intent_fewshot` + 阈值初校准 | cs-orchestration/knowledge（《04》§3） |
-| 批3 | FAQ 通道：`cs_faq` 表 + Milvus `cs_faq` collection + 种子 FAQ（≥50）+ admin 录入最小 API | cs-knowledge/admin（《05》§5） |
-| 批4 | 知识通道：MCP client 接入（JWT，V-01 核验落地）+ `kb_search/kb_ask` 封装 + 熔断/超时/自限令牌桶 + TRACE 帧 + A2A 备用通道 | cs-knowledge/tooling/infrastructure（《05》） |
-| 批5 | 护栏链：InputModeration（含注入检测）+ PiiIn/Out + OutputModeration 流式分段送审 + 违规计数处置 | cs-ai-core（《11》§2/§4/§5） |
-| 批6 | 观测与质量基线：Langfuse 栈接入（ObservationFilter，V-05 核验）+ 审计 v1（append-only+hash 链）+ golden set ≥200 + promptfoo CI 门禁 + 指标族/告警初版 | cs-eval/ai-core/infra（《09》《10》） |
+| M1批1 | 会话域完整：状态机 + 事件溯源 + 上下文组装（滚动摘要/槽位）+ 超时唤醒 + 并发轮锁 | cs-conversation（《03》） |
+| M1批2 | 意图路由：L1 规则 + L2 T0 分类器 + Milvus `cs_intent_fewshot` + 阈值初校准 | cs-orchestration/knowledge（《04》§3） |
+| M1批3 | FAQ 通道：`cs_faq` 表 + Milvus `cs_faq` collection + 种子 FAQ（≥50）+ admin 录入最小 API | cs-knowledge/admin（《05》§5） |
+| M1批4 | 知识通道：MCP client 接入（JWT，V-01 核验落地）+ `kb_search/kb_ask` 封装 + 熔断/超时/自限令牌桶 + TRACE 帧 + A2A 备用通道 | cs-knowledge/tooling/infrastructure（《05》） |
+| M1批5 | 护栏链：InputModeration（含注入检测）+ PiiIn/Out + OutputModeration 流式分段送审 + 违规计数处置 | cs-ai-core（《11》§2/§4/§5） |
+| M1批6 | 观测与质量基线：Langfuse 栈接入（ObservationFilter，V-05 核验）+ 审计 v1（append-only+hash 链）+ golden set ≥200 + promptfoo CI 门禁 + 指标族/告警初版 | cs-eval/ai-core/infra（《09》《10》） |
 
 ## 4. 任务清单
 
@@ -50,5 +50,5 @@ INF-3 KB 服务联调凭据（MCP 连通性）；INF-4 阿里云内容安全开�
 
 | 轮次 | 代号 | 结论 | 跟进 |
 |---|---|---|---|
-| — | E2E-M1-1 问答主链（待批6 交付） | 待交付 | — |
-| — | E2E-M1-2 KB 故障演练（待批4 交付） | 待交付 | — |
+| — | E2E-M1-1 问答主链（待M1批6 交付） | 待交付 | — |
+| — | E2E-M1-2 KB 故障演练（待M1批4 交付） | 待交付 | — |

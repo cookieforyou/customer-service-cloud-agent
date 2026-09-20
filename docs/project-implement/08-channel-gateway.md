@@ -69,7 +69,7 @@ openapi 渠道不使用帧协议，返回 `{answer, turnId, refs[], toolCalls[],
 ## 7. 多租户与安全要点（详见《11》）
 
 - `tenantId` 来自 JWT/签名校验后的服务端映射，**客户端传入一律忽略**。
-- 渠道 webhook 类适配器（预留 IM）须验签 + 时间窗防重放；消息附件先落对象存储引用再入会话（不内联 base64）。
+- 渠道 webhook 类适配器（预留 IM）须验签 + 时间窗防重放；消息附件先落对象存储（复用既有 MinIO）引用再入会话（不内联 base64）。
 - CORS 白名单按租户站点配置；SSE 响应禁用代理缓冲（`X-Accel-Buffering: no`）。
 
 ## 8. 修订注记

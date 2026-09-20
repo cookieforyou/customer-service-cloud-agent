@@ -14,12 +14,12 @@
 
 | 批 | 内容 | 涉及模块 |
 |---|---|---|
-| 批1 | 多租户：`cs_tenant_config` 覆盖合并 + 配额计量（RPM/TPM/高危次数）+ RLS 全表补齐 | cs-domain/channel（《11》§6） |
-| 批2 | 工具规模化：ToolSearchToolCallingAdvisor（Regex 索引）+ 工具语义索引预留 + 工具 ≥10 场景验证 | cs-tooling/ai-core（《06》§4） |
-| 批3 | 缺口闭环：信号采集（五源）+ ES `cs_gap_candidate` 聚集 + admin 队列 + 出口回流（FAQ/KB badcase/golden set） | cs-knowledge/eval/admin（《05》§6） |
-| 批4 | 合规门禁：题库三件（拒答 ≥300 / 非拒答 ≥200 / 抽检 ≥1000 载具）+ CI 门禁 + AI 标识/投诉入口/违规处置 | cs-eval/channel（《09》§3、《11》§5/§8） |
-| 批5 | 管理后台：admin API 聚合（Agent/工具/FAQ/审计查询/缺口/看板数据）+ 审计导出审批流 | cs-admin（《02》） |
-| 批6 | openapi 渠道 + 压测：同步 JSON 契约 + cs-loadtest 三场景（常规/峰值/知识故障） | cs-channel/eval（《08》§2、《13》） |
+| M3批1 | 多租户：`cs_tenant_config` 覆盖合并 + 配额计量（RPM/TPM/高危次数）+ RLS 全表补齐 | cs-domain/channel（《11》§6） |
+| M3批2 | 工具规模化：ToolSearchToolCallingAdvisor（Regex 索引）+ 工具语义索引预留 + 工具 ≥10 场景验证 | cs-tooling/ai-core（《06》§4） |
+| M3批3 | 缺口闭环：信号采集（五源）+ ES `cs_gap_candidate` 聚集 + admin 队列 + 出口回流（FAQ/KB badcase/golden set） | cs-knowledge/eval/admin（《05》§6） |
+| M3批4 | 合规门禁：题库三件（拒答 ≥300 / 非拒答 ≥200 / 抽检 ≥1000 载具）+ CI 门禁 + AI 标识/投诉入口/违规处置 | cs-eval/channel（《09》§3、《11》§5/§8） |
+| M3批5 | 管理后台：admin API 聚合（Agent/工具/FAQ/审计查询/缺口/看板数据）+ 审计导出审批流 | cs-admin（《02》） |
+| M3批6 | openapi 渠道 + 压测：同步 JSON 契约 + cs-loadtest 三场景（常规/峰值/知识故障） | cs-channel/eval（《08》§2、《13》） |
 
 ## 4. 任务清单
 
@@ -48,7 +48,7 @@
 
 | 轮次 | 代号 | 结论 | 跟进 |
 |---|---|---|---|
-| — | E2E-M3-1 多租户隔离（待批1 交付） | 待交付 | — |
-| — | E2E-M3-2 缺口闭环（待批3 交付） | 待交付 | — |
-| — | E2E-M3-3 合规门禁（待批4 交付） | 待交付 | — |
-| — | LT-1 压测三场景（待批6 交付） | 待交付 | — |
+| — | E2E-M3-1 多租户隔离（待M3批1 交付） | 待交付 | — |
+| — | E2E-M3-2 缺口闭环（待M3批3 交付） | 待交付 | — |
+| — | E2E-M3-3 合规门禁（待M3批4 交付） | 待交付 | — |
+| — | LT-1 压测三场景（待M3批6 交付） | 待交付 | — |
