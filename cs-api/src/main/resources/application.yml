@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: cs-api
+
+server:
+  # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8，部署形态 M0批5 落地）
+  port: 8081

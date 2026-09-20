@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.0</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>com.enterprise</groupId>
+  <artifactId>cs-parent</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>CSCA :: Parent</name>
+  <description>企业智能客服助手 &amp; 多 Agent 协同服务平台（CSCA）—— 模块化单体，M0批1 工程骨架</description>
+
+  <properties>
+    <java.version>25</java.version>
+    <!-- 版本钉板（2026-09-20 核验：Boot 4.1.0 / Spring AI 2.0.1 本机已缓存可复现；Modulith 2.1.1、ArchUnit 1.5.0 为官方 releases 最新稳定） -->
+    <spring-ai.version>2.0.1</spring-ai.version>
+    <spring-modulith.version>2.1.1</spring-modulith.version>
+    <archunit.version>1.5.0</archunit.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
+  </properties>
+
+  <modules>
+    <module>cs-commons</module>
+    <module>cs-infra</module>
+    <module>cs-ai-core</module>
+    <module>cs-conversation</module>
+    <module>cs-knowledge</module>
+    <module>cs-tooling</module>
+    <module>cs-orchestration</module>
+    <module>cs-collaboration</module>
+    <module>cs-channel</module>
+    <module>cs-eval</module>
+    <module>cs-admin</module>
+    <module>cs-api</module>
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.modulith</groupId>
+        <artifactId>spring-modulith-bom</artifactId>
+        <version>${spring-modulith.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${archunit.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <!-- 内部模块统一版本（《02》§8：版本集中根 POM，子模块禁止自声明） -->
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-commons</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-infra</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-ai-core</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-conversation</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-knowledge</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-tooling</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-orchestration</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-collaboration</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-channel</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-eval</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.enterprise</groupId><artifactId>cs-admin</artifactId><version>${project.version}</version></dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

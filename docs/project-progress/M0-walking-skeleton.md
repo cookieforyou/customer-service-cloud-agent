@@ -1,6 +1,6 @@
 # M0 · Walking Skeleton（周 1–2）
 
-> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：⬜ 未启动
+> 对应设计：《14》§1-M0、《02》模块结构、《03》会话、《08》渠道、《10》观测 ｜ 状态：🔶 进行中（M0批1 已交付 ✅ 2026-09-20）
 
 ## 1. 目标与范围
 
@@ -24,9 +24,9 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 
 | # | 任务 | 负责模块 | 验收标准 | 完成情况 |
 |---|---|---|---|---|
-| 0.1 | Maven 多模块 + 根 POM BOM 钉版 | 全部 | reactor BUILD SUCCESS；子模块无自声明版本 | |
-| 0.2 | ArchUnit 六规则（《02》§6） | cs-api(test) | 违规=CI 失败；故意注入违规可红 | |
-| 0.3 | CI 流水线四阶段 | — | PR 全链自动执行 | |
+| 0.1 | Maven 多模块 + 根 POM BOM 钉版 | 全部 | reactor BUILD SUCCESS；子模块无自声明版本 | ✅ 2026-09-20 M0批1：12 模块全绿；钉板 Boot 4.1.0 / Spring AI BOM 2.0.1 / Modulith BOM 2.1.1 / ArchUnit 1.5.0 / Testcontainers BOM 2.0.5（核验：Boot/Spring AI 本机 .m2 实存（姊妹同钉板可复现），Modulith/ArchUnit 官方 releases 最新稳定，读数见 00 卷） |
+| 0.2 | ArchUnit 六规则（《02》§6） | cs-api(test) | 违规=CI 失败；故意注入违规可红 | ✅ 2026-09-20 M0批1：六规则落地；实证注入 R2 违规（channel→conversation.domain）被拦（2 violations）后回滚复验全绿；r3/r6 骨架期 `allowEmptyShould(true)`（api/app 包尚无类，护栏随代码生长生效）；另实证 Maven 依赖图为第一道闸（无依赖时编译期即拦） |
+| 0.3 | CI 流水线四阶段 | — | PR 全链自动执行 | ✅ 2026-09-20 M0批1：`.github/workflows/ci.yml` 三 job（build→test(unit+arch)→integration），JDK 25 temurin + maven cache；eval/redteam 接入点注释挂 M1批6/M3。注：PR 自动触发依赖远端仓库托管，配置就绪待远端启用 |
 | 0.4 | Flyway 基线 + RLS | cs-domain | 迁移可重放；跨租户查询被 RLS 拦截的集成测试 | |
 | 0.5 | Casdoor JWT 资源服务 + 三身份 | cs-api | 访客/坐席/服务 token 分别过/拒 | |
 | 0.6 | webchat 渠道 + SSE 帧协议 v1 | cs-channel | ACK/TOKEN/DONE/ERROR 帧可收；断线 Last-Event-ID 补发 | |

@@ -10,3 +10,6 @@ node_modules
 .env.local
 .env.production
 __pycache__
+.DS_Store
+*.iml
+.flattened-pom.xml

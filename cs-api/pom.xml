@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.enterprise</groupId>
+    <artifactId>cs-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>cs-api</artifactId>
+  <name>CSCA :: api（组装与启动）</name>
+  <description>唯一可部署模块：启动入口、Security/OpenAPI 横切配置、application*.yml 装配（M0批1 骨架）</description>
+
+  <dependencies>
+    <!-- 组装例外：cs-api 可依赖全部模块（《02》§3） -->
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-commons</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-infra</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-ai-core</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-conversation</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-knowledge</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-tooling</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-orchestration</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-collaboration</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-channel</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-eval</artifactId></dependency>
+    <dependency><groupId>com.enterprise</groupId><artifactId>cs-admin</artifactId></dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>
