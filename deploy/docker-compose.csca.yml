@@ -43,7 +43,7 @@ services:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.161.0
+    image: otel/opentelemetry-collector-contrib:0.144.0
     restart: unless-stopped
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:

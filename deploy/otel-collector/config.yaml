@@ -1,7 +1,7 @@
 # CSCA 自有轻量 OTel Collector（《10》§1 fan-out；《14》§0 compose 资产 M0批5 交付）
 # M0 链路：cs-api(OTLP/HTTP) → 本 collector → 复用 kb-rag-agent 栈的 Jaeger（工程排障）
 # M1 扩展：Langfuse Project OTLP 第二 exporter（INF-5，配 pk/sk Basic Auth 头）
-# 镜像钉版（坑#06）：otel/opentelemetry-collector-contrib v0.161.0（2026-09 releases 稳定版）
+# 镜像钉版（坑#06）：otel/opentelemetry-collector-contrib v0.144.0（2026-01 releases 稳定版）
 
 receivers:
   otlp:
