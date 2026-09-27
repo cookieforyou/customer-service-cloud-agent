@@ -24,6 +24,9 @@ spring:
 
   flyway:
     enabled: true          # 迁移唯一落位 cs-infra: classpath:db/migration（《12》§2 落位约定）
+    # 显式钉死目标 schema（坑#27）：缺省解析在 public 缺失时会把 search_path 原始串
+    # （"$user", public）当字面 schema 名误建；显式后缺失由 Flyway 以应用账号自建（owner 正确）
+    schemas: public
 
   data:
     redis:
