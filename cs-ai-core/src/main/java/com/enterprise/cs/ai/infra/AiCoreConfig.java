@@ -25,6 +25,9 @@ import java.util.Map;
 @Configuration
 public class AiCoreConfig {
 
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(AiCoreConfig.class);
+
     public static final String BEAN_T1_PRIMARY = "t1PrimaryChatModel";
 
     /** T1 主模型：密钥缺失快失败（防落入 OpenAI SDK 晦涩凭证异常）。 */
@@ -46,10 +49,13 @@ public class AiCoreConfig {
                 // 流式末块携带 usage（智谱 OpenAI 兼容端点支持，姊妹实证）——轮次计量 tokens_in/out 依赖
                 .streamOptions(OpenAiChatOptions.StreamOptions.builder().includeUsage(true).build())
                 .build();
-        return OpenAiChatModel.builder()
+        ChatModel model = OpenAiChatModel.builder()
                 .options(options)
                 .observationRegistry(observationRegistry.getIfAvailable(() -> ObservationRegistry.NOOP))
                 .build();
+        // 关键配置生效值日志（坑#11 纪律；不落 key）：启动即可判别模型装配形态
+        log.info("T1 主模型已装配: model={}, baseUrl={}", t1.model(), t1.baseUrl());
+        return model;
     }
 
     /** 路由模型（应用级模型面）：@Primary 消多 ChatModel 注入歧义（坑#04）。 */

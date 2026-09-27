@@ -32,6 +32,8 @@ public class OrchestrationTurnEngineConfig {
     public ChatTurnPort chatTurnPort(SupervisorTurnPort supervisor, ConversationPort conversation,
                                      ChatTurnMetrics metrics,
                                      ObjectProvider<ObservationRegistry> observationRegistry) {
+        // 生效值日志（坑#11 纪律）：与 echo 形态在启动日志可判别
+        log.info("轮次引擎 = orchestration（supervisor 最小对话链，T1 经 RoutingChatModel）");
         return (command, sink) -> Observation
                 .createNotStarted("chat.turn", observationRegistry.getIfAvailable(() -> ObservationRegistry.NOOP))
                 .lowCardinalityKeyValue("cs.tenant_id", command.tenantId())

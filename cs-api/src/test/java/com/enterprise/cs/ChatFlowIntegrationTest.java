@@ -219,6 +219,28 @@ class ChatFlowIntegrationTest {
         assertThat(limited.body().path("code").asText()).isEqualTo("RATE_LIMITED");
     }
 
+    // ---------- ⑦ Widget 入口与 404 语义（坑#28） ----------
+
+    @Test
+    void widgetIndexServedAtDirectoryPath() {
+        String body = client().get().uri("/widget/")
+                .exchangeToMono(r -> r.bodyToMono(String.class).defaultIfEmpty("")
+                        .map(s -> r.statusCode().value() + ":" + s))
+                .block(Duration.ofSeconds(15));
+        assertThat(body).startsWith("200:");
+        assertThat(body).contains("<!DOCTYPE html");
+    }
+
+    @Test
+    void missingStaticResourceMapsTo404NotInternalError() {
+        Resp resp = client().get().uri("/widget/nonexistent.js")
+                .exchangeToMono(r -> r.bodyToMono(String.class).defaultIfEmpty("")
+                        .map(s -> new Resp(r.statusCode().value(), parse(s))))
+                .block(Duration.ofSeconds(15));
+        assertThat(resp.status()).isEqualTo(404);
+        assertThat(resp.body().path("code").asText()).isEqualTo("NOT_FOUND");
+    }
+
     // ---------- helpers ----------
 
     private String visitorToken(String visitorId) {

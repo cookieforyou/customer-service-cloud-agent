@@ -12,9 +12,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class EchoTurnEngineConfig {
 
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(EchoTurnEngineConfig.class);
+
     @Bean
     @ConditionalOnProperty(name = "cs.channel.turn-engine", havingValue = "echo", matchIfMissing = true)
     public ChatTurnPort echoTurnEngine() {
+        // 生效值日志（坑#11 纪律）：与 orchestration 形态在启动日志可判别
+        log.info("轮次引擎 = echo 桩（M0批3 验证形态；CS_TURN_ENGINE 可切 orchestration）");
         return (command, sink) -> {
             String text = (command.userText() == null || command.userText().isBlank())
                     ? "（空消息）" : command.userText();

@@ -36,6 +36,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 
+    /**
+     * 静态资源/路径未命中（坑#28）：Spring 7 静态链路抛 NoResourceFoundException——
+     * 映射 404，不得落入兜底 500（兜底会污染启动/路由类故障判读）。
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> noResource(
+            org.springframework.web.servlet.resource.NoResourceFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ErrorCodes.NOT_FOUND, "资源不存在: " + e.getResourcePath()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> unexpected(Exception e) {
         log.error("unhandled exception", e);
