@@ -59,6 +59,14 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
+    <!-- macOS 开发日志噪音消除：netty DNS 解析器 native 库（缺失时回落系统 DNS 并打 ERROR；
+         linux 运行态不加载、仅 dev 生效；版本随 Boot BOM 的 netty 管理） -->
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-resolver-dns-native-macos</artifactId>
+      <classifier>osx-aarch_64</classifier>
+      <scope>runtime</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
