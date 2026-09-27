@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSCA Webchat Widget（M0批3 测试版）</title>
+  <title>CSCA Webchat Widget（E2E 验证版）</title>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 12px; }
     fieldset { border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px; }
@@ -19,7 +19,7 @@
   </style>
 </head>
 <body>
-<h3>CSCA Webchat Widget <span style="font-size:12px;color:#888">（M0批3 测试版 · echo 引擎 · 本回答由 AI 提供）</span></h3>
+<h3>CSCA Webchat Widget <span style="font-size:12px;color:#888">（最小对话链 E2E 版 · 本回答由 AI 提供）</span></h3>
 
 <fieldset>
   <legend>1. 站点接入（appKey + HMAC 验签换访客令牌）</legend>
@@ -43,7 +43,7 @@
 </fieldset>
 
 <script type="module">
-  const state = { token: null, sessionId: null, lastFrameId: 0, es: null, msgSeq: 0 };
+  const state = { token: null, sessionId: null, lastFrameId: 0, streamGen: 0, msgSeq: 0 };
 
   async function api(path, method, body) {
     const res = await fetch('/api/v1/chat' + path, {
@@ -65,6 +65,8 @@
     return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
   window.getToken = async function () {
     const appKey = document.getElementById('appKey').value.trim();
     const secret = document.getElementById('appSecret').value.trim();
@@ -75,6 +77,7 @@
     if (r.status === 200) {
       state.token = r.body.data.token;
       el.textContent = '✅ visitorId=' + r.body.data.visitorId + '（有效期 ' + r.body.data.expiresInSeconds + 's）';
+      if (state.sessionId) { openStream(state.lastFrameId); }   // 重启后旧令牌失效：换发后重开流
     } else {
       el.textContent = '❌ ' + r.status + ' ' + (r.body.code || '') + ' ' + (r.body.message || '');
     }
@@ -99,21 +102,68 @@
     log('ACK', JSON.stringify(r.body));
   };
 
+  // 坑#29：EventSource 无法携带 Authorization 头（流订阅 401 静默）——改 fetch 流式读取。
+  // 协议语义（《08》§4/§8 v1.3.0）：DONE/ERROR 即完成流、一轮一连接——流结束后按
+  // Last-Event-ID 自动重连续接（gap 退避），间隔期靠服务端 :ping 心跳保活。
   function openStream(afterId) {
-    if (state.es) { state.es.close(); state.es = null; }
-    const url = '/api/v1/chat/sessions/' + state.sessionId + '/stream'
-      + (afterId ? '?lastEventId=' + afterId : '');
-    const es = new EventSource(url);
-    state.es = es;
-    ['TOKEN', 'MESSAGE', 'TOOL', 'TRACE', 'ESCALATION', 'CSAT', 'DONE', 'ERROR'].forEach(ev =>
-      es.addEventListener(ev, e => {
-        if (e.lastEventId) {
-          state.lastFrameId = Number(e.lastEventId);
-          document.getElementById('lastId').textContent = state.lastFrameId;
+    const gen = ++state.streamGen;
+    streamLoop(gen, afterId);
+  }
+
+  async function streamLoop(gen, afterId) {
+    while (state.streamGen === gen && state.sessionId && state.token) {
+      try {
+        const res = await fetch('/api/v1/chat/sessions/' + state.sessionId
+            + '/stream?lastEventId=' + afterId, {
+          headers: { 'Authorization': 'Bearer ' + state.token, 'Accept': 'text/event-stream' }
+        });
+        if (res.status === 401) {
+          log('SYS', '访客令牌失效（401）——请重新「换发访客令牌」');
+          return;
         }
-        log(ev, e.data);
-      }));
-    es.onerror = () => { /* 浏览器自动重连将带 Last-Event-ID 头 */ };
+        if (!res.ok) {
+          log('SYS', '流订阅失败 HTTP ' + res.status);
+          await sleep(1000);
+          continue;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) { break; }
+          buf += decoder.decode(value, { stream: true });
+          let sep;
+          while ((sep = buf.indexOf('\n\n')) >= 0) {
+            const block = buf.slice(0, sep);
+            buf = buf.slice(sep + 2);
+            afterId = handleBlock(block, afterId);
+          }
+        }
+      } catch (e) {
+        if (state.streamGen !== gen) { return; }
+        await sleep(1000);
+      }
+      await sleep(200);   // DONE 即完成流 → 短退避后续接下一轮
+    }
+  }
+
+  function handleBlock(block, afterId) {
+    let id = null, event = null, data = '';
+    for (const line of block.split('\n')) {
+      if (line.startsWith(':')) { continue; }              // 心跳注释帧（:ping）
+      if (line.startsWith('id:')) { id = line.slice(3).trim(); }
+      else if (line.startsWith('event:')) { event = line.slice(6).trim(); }
+      else if (line.startsWith('data:')) { data += line.slice(5).trim(); }
+    }
+    if (event === null && id === null) { return afterId; }
+    const frameId = id ? Number(id) : 0;
+    if (frameId > state.lastFrameId) {
+      state.lastFrameId = frameId;
+      document.getElementById('lastId').textContent = frameId;
+    }
+    if (event) { log(event, data); }
+    return Math.max(afterId, frameId);
   }
 
   window.replay = function () {
