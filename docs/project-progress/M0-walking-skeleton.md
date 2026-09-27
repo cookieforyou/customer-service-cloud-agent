@@ -40,6 +40,7 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 | # | 决策 | 选项与定案 |
 |---|---|---|
 | D-M0-1 | SSE 补发缓冲 Redis 化（M0批3 偏离复审，2026-09-20 M0批5） | **维持内存 256 环形至多实例批次（M1 部署复核点）**——M0 单实例内存缓冲已含序号/补发/终结语义（坑#21/#23 修正后），Redis 化引入跨实例序号分配与补发一致性问题，单实例期收益为零；触发重估条件：多实例部署进入计划（M1 灰度拓扑落地时） |
+| D-M0-2 | 复盘 O-1（生产 RLS 接线，P0）前移至热修批（2026-09-27 定案，拍板：用户——启动修复请求连带授权） | **随坑#25 热修一并落地**：仅修 V2 CREATEROLE 则本地直连 ECS PG 启动成功但首条消息必被 FORCE RLS fail-closed 拒（应用账号=表 owner 非 superuser）——启动修复与运行期可用不可分割；TenantContext→每事务 set_config 形态（《12》v1.4.0），M1批1 不再重复此项 |
 
 ## 6. 验收标准（里程碑 DoD）
 
@@ -55,7 +56,7 @@ INF-1 监控栈（OTel Collector+Jaeger+Prometheus/Grafana，见用户侧清单�
 
 前置：本机或 ECS 可达的 PostgreSQL + Redis；智谱 GLM API Key；按 `deploy/README.md` 准备 `.env`。
 
-**A. 观测栈接入（INF-1，一次性）**：按 `deploy/README.md` §1-§4 执行（构建镜像 → 起 csca 栈 → Prometheus 纳管 → Grafana 导入）。
+**A. 观测栈接入（INF-1，一次性）**：按 `deploy/README.md` §1-§4 执行（构建镜像 → 起 csca 栈 → Prometheus 纳管 → Grafana 导入）；**PG 前置**（首次对 ECS PG 启动，坑#25）按 `deploy/README.md` §0 执行（失败行清理 → `deploy/db/bootstrap-roles.sql` 管理员引导 cs_app）。
 
 **B. 真实模型对话链（原 E2E-M0-4）**：
 1. `.env`：`CS_AI_API_KEY=<智谱key>`、`CS_AI_ENABLED=true`、`CS_TURN_ENGINE=orchestration`、`CS_OTLP_ENABLED=true`（容器内 endpoint 已由 compose 注入 collector）；

@@ -2,6 +2,7 @@ package com.enterprise.cs.conversation.app;
 
 import com.enterprise.cs.commons.constant.CsConstants;
 import com.enterprise.cs.commons.constant.ErrorCodes;
+import com.enterprise.cs.commons.context.TenantContext;
 import com.enterprise.cs.commons.exception.BusinessException;
 import com.enterprise.cs.conversation.api.ConversationPort;
 import com.enterprise.cs.conversation.domain.Message;
@@ -36,17 +37,36 @@ public class ConversationService implements ConversationPort {
     private final MessageRepository messages;
     private final TurnRepository turns;
     private final SessionEventRepository events;
+    private final jakarta.persistence.EntityManager em;
 
     public ConversationService(SessionRepository sessions, MessageRepository messages,
-                               TurnRepository turns, SessionEventRepository events) {
+                               TurnRepository turns, SessionEventRepository events,
+                               jakarta.persistence.EntityManager em) {
         this.sessions = sessions;
         this.messages = messages;
         this.turns = turns;
         this.events = events;
+        this.em = em;
+    }
+
+    /**
+     * RLS 租户 GUC 注入（《12》§2.2，坑#25）：事务内 set_config(...,true) 会话级生效、
+     * 提交即失效；TenantContext 缺失不注入（superuser 测试旁路无害，非特权连接由
+     * fail-closed 策略拒绝——安全姿态正确）。各事务入口首行调用。
+     */
+    private void applyTenantGuc() {
+        String tenant = TenantContext.get();
+        if (tenant == null || tenant.isBlank()) {
+            return;
+        }
+        em.createNativeQuery("SELECT set_config('cs.tenant_id', :tenant, true)")
+                .setParameter("tenant", tenant)
+                .getSingleResult();
     }
 
     @Override
     public SessionOpened openSession(OpenSessionCmd cmd) {
+        applyTenantGuc();
         UUID id = UUID.randomUUID();
         sessions.save(new Session(id, cmd.tenantId(), cmd.channel(), cmd.visitorId(), "CREATED", Instant.now()));
         return new SessionOpened(id);
@@ -54,12 +74,14 @@ public class ConversationService implements ConversationPort {
 
     @Override
     public Optional<SessionInfo> sessionInfo(UUID sessionId) {
+        applyTenantGuc();
         return sessions.findById(sessionId)
                 .map(s -> new SessionInfo(s.getId(), s.getTenantId(), s.getChannel(), s.getVisitorId(), s.getState()));
     }
 
     @Override
     public AppendedMessage appendInbound(AppendInboundCmd cmd) {
+        applyTenantGuc();
         Session session = sessions.findById(cmd.sessionId())
                 .orElseThrow(() -> BusinessException.of(ErrorCodes.SESSION_NOT_FOUND,
                         "session not found: " + cmd.sessionId()));
@@ -85,12 +107,14 @@ public class ConversationService implements ConversationPort {
 
     @Override
     public Optional<UUID> inboundMessageId(String tenantId, String channel, String channelMsgId) {
+        applyTenantGuc();
         return messages.findByTenantIdAndChannelAndChannelMsgId(tenantId, channel, channelMsgId)
                 .map(Message::getId);
     }
 
     @Override
     public void startTurn(StartTurnCmd cmd) {
+        applyTenantGuc();
         Session session = requireSession(cmd.sessionId());
         Turn turn = new Turn(cmd.turnId(), cmd.sessionId(), nextTurnSeq(cmd.sessionId()),
                 CsConstants.TURN_STATE_RUNNING, Instant.now());
@@ -105,6 +129,7 @@ public class ConversationService implements ConversationPort {
 
     @Override
     public UUID finishTurn(FinishTurnCmd cmd) {
+        applyTenantGuc();
         Turn turn = turns.findById(cmd.turnId())
                 .orElseThrow(() -> BusinessException.of(ErrorCodes.BAD_REQUEST,
                         "turn not found: " + cmd.turnId()));
@@ -125,6 +150,7 @@ public class ConversationService implements ConversationPort {
 
     @Override
     public List<WindowMessage> recentWindow(UUID sessionId, int limit, UUID excludeMessageId) {
+        applyTenantGuc();
         UUID exclude = excludeMessageId != null ? excludeMessageId : new UUID(0, 0);
         List<Message> recent = messages.findBySessionIdAndRoleInAndContentTypeAndIdNotOrderBySeqDesc(
                 sessionId, List.of("USER", "AI"), "TEXT", exclude, Pageable.ofSize(Math.max(1, limit)));

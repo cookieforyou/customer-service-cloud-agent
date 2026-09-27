@@ -4,6 +4,25 @@
 > 便于回滚（INF-1 前置）。镜像全部钉版（坑#06）；分栈 compose 不用 `--remove-orphans`（坑#09）。
 > 密钥一律经 `.env`（gitignore 排除）注入，不入仓库。
 
+## 0. PG 前置（首次对 ECS PG 启动，坑#25）
+
+ECS PG（实测 18.0；本地测试镜像 pgvector:pg17，对齐事项见 M0 复盘 O-7）应用账号无 CREATEROLE，
+`cs_app` 角色由运维引导；应用迁移（V2）能力自适应跳过。当前形态：本地 IDEA 启动 + 环境变量
+直连 ECS PG（本地 E2E 验证期），下列 SQL 经任意 psql 客户端以管理员连接串执行即可。
+
+1. **失败残留清理**（曾以旧 V2 启动过的库；ECS `cs_agent` 当前即此态——V1 已建表、V2 留失败行）。
+   全新库无历史数据，推荐直接重置（psql 管理员执行）：
+   ```sql
+   DROP SCHEMA public CASCADE; CREATE SCHEMA public;
+   ```
+   （保留数据时改为：`DELETE FROM flyway_schema_history WHERE version = '2';`）
+2. **角色引导**（管理员执行一次，幂等；先于应用首启为佳）：
+   ```bash
+   psql "<管理员连接串>" -f deploy/db/bootstrap-roles.sql
+   ```
+3. 应用启动即完成 V1-V3 迁移。**运行期 RLS**：应用以表 owner（非 superuser）连接时受
+   FORCE RLS 约束，租户 GUC 由应用每事务注入（TenantContext→set_config），无需人工干预。
+
 ## 1. 构建（宿主侧，ECS 上执行）
 
 ```bash

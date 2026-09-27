@@ -1,6 +1,7 @@
 package com.enterprise.cs.channel.infra;
 
 import com.enterprise.cs.commons.constant.CsConstants;
+import com.enterprise.cs.commons.context.TenantContext;
 import com.enterprise.cs.conversation.api.ConversationPort;
 import com.enterprise.cs.channel.api.ChatTurnPort;
 import com.enterprise.cs.orchestration.api.SupervisorTurnPort;
@@ -52,7 +53,11 @@ public class OrchestrationTurnEngineConfig {
     private void runTurn(SupervisorTurnPort supervisor, ConversationPort conversation,
                          ChatTurnMetrics metrics, ChatTurnPort.TurnCommand command,
                          com.enterprise.cs.channel.api.FrameSink sink) throws Exception {
-        long startedAt = System.nanoTime();
+        // 轮次执行线程（虚拟线程）自持租户上下文——《12》§2.2 RLS GUC 注入（坑#25）：
+        // 覆盖本线程内全部持久层触达（startTurn/finishTurn + SessionMemoryAdvisor 窗口读）
+        TenantContext.set(command.tenantId());
+        try {
+            long startedAt = System.nanoTime();
         conversation.startTurn(new ConversationPort.StartTurnCmd(
                 command.sessionId(), command.turnId(), command.messageId(),
                 CsConstants.MODEL_TIER_T1,
@@ -92,5 +97,8 @@ public class OrchestrationTurnEngineConfig {
                         sink.error(code, message);
                     }
                 });
+        } finally {
+            TenantContext.clear();
+        }
     }
 }

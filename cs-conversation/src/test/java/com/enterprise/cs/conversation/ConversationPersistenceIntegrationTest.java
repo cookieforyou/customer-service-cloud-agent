@@ -186,6 +186,41 @@ class ConversationPersistenceIntegrationTest {
         }
     }
 
+    /** 坑#25/O-1 前移：应用服务路径的 RLS GUC 注入——cs_app 角色下 TenantContext 置租户可读，未置 fail-closed 0 行。 */
+    @Test
+    void tenantContextInjectsGucForNonSuperuser() {
+        UUID sessionId = UUID.randomUUID();
+        asTenant("t-a", con -> update(con, INSERT_SESSION, sessionId, "t-a"));
+
+        // 未置租户上下文：cs_app 角色下服务读 0 行（fail-closed 兜底）
+        inTx((con, st) -> {
+            st.execute("SET ROLE cs_app");
+            try {
+                assertThat(conversation.sessionInfo(sessionId)).isEmpty();
+            } finally {
+                resetRoleQuietly(st);
+            }
+            return null;
+        });
+
+        // 置租户上下文：服务事务内 set_config 注入 GUC——同租户行可见
+        com.enterprise.cs.commons.context.TenantContext.set("t-a");
+        try {
+            inTx((con, st) -> {
+                st.execute("SET ROLE cs_app");
+                try {
+                    assertThat(conversation.sessionInfo(sessionId))
+                            .hasValueSatisfying(s -> assertThat(s.tenantId()).isEqualTo("t-a"));
+                } finally {
+                    resetRoleQuietly(st);
+                }
+                return null;
+            });
+        } finally {
+            com.enterprise.cs.commons.context.TenantContext.clear();
+        }
+    }
+
     /** 在独立事务内以 cs_app 角色 + 指定租户 GUC 执行；GUC/数据语句同一 Connection；用毕 RESET ROLE。 */
     private <T> T asTenant(String tenantId, SqlWork<T> work) {
         return inTx((con, st) -> {

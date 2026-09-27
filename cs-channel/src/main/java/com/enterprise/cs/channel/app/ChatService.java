@@ -14,6 +14,7 @@ import com.enterprise.cs.channel.infra.VisitorRateLimiter;
 import com.enterprise.cs.channel.infra.VisitorTokenService;
 import com.enterprise.cs.commons.constant.ErrorCodes;
 import com.enterprise.cs.commons.constant.RedisKeys;
+import com.enterprise.cs.commons.context.TenantContext;
 import com.enterprise.cs.commons.exception.BusinessException;
 import com.enterprise.cs.conversation.api.ConversationPort;
 import org.slf4j.Logger;
@@ -70,9 +71,14 @@ public class ChatService {
     }
 
     public SessionOpenedView openSession(AuthClaims claims) {
-        ConversationPort.SessionOpened opened =
-                conversation.openSession(new ConversationPort.OpenSessionCmd(claims.tenantId(), CHANNEL, claims.principalId()));
-        return new SessionOpenedView(opened.sessionId());
+        TenantContext.set(claims.tenantId());
+        try {
+            ConversationPort.SessionOpened opened =
+                    conversation.openSession(new ConversationPort.OpenSessionCmd(claims.tenantId(), CHANNEL, claims.principalId()));
+            return new SessionOpenedView(opened.sessionId());
+        } finally {
+            TenantContext.clear();
+        }
     }
 
     public SendMessageView sendMessage(UUID sessionId, SendMessageRequest request, AuthClaims claims) {
@@ -80,6 +86,15 @@ public class ChatService {
                 || request.channelMsgId() == null || request.channelMsgId().isBlank()) {
             throw BusinessException.of(ErrorCodes.BAD_REQUEST, "text 与 channelMsgId 必填");
         }
+        TenantContext.set(claims.tenantId());
+        try {
+            return doSendMessage(sessionId, request, claims);
+        } finally {
+            TenantContext.clear();
+        }
+    }
+
+    private SendMessageView doSendMessage(UUID sessionId, SendMessageRequest request, AuthClaims claims) {
         rateLimiter.check(claims.principalId());
 
         // 归属校验：会话不存在或非本人/租户，一律 404（不泄露存在性，《11》§6）
@@ -123,7 +138,13 @@ public class ChatService {
     }
 
     public Flux<ServerSentEvent<String>> stream(UUID sessionId, long lastEventId, AuthClaims claims) {
-        requireOwnedSession(sessionId, claims);
+        TenantContext.set(claims.tenantId());
+        try {
+            requireOwnedSession(sessionId, claims);
+        } finally {
+            TenantContext.clear();
+        }
+        // 返回的 Flux 仅触达内存帧总线（无持久层调用）——订阅线程无需租户上下文
         Flux<ServerSentEvent<String>> main = frames.subscribe(sessionId, lastEventId);
         // 心跳（《08》§4）：注释帧 :ping 间隔可配（缺省 15s）——keep-alive 与代理超时防御；
         // DONE/ERROR 即完成流，takeUntil 放行终止帧并取消心跳

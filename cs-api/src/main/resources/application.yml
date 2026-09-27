@@ -1,6 +1,15 @@
+server:
+  # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8/《13》§1，CS_SERVER_PORT 注入）
+  port: ${CS_SERVER_PORT:8081}
+  # 优雅停机（《13》§6）：在途轮排空（M0 整轮预算 60s + 缓冲）
+  shutdown: graceful
+
 spring:
   application:
     name: cs-api
+
+  lifecycle:
+    timeout-per-shutdown-phase: ${CS_SHUTDOWN_TIMEOUT:70s}
 
   # PG 直连 ECS 既有原生实例（环境注入；本地/Testcontainers 场景由 @ServiceConnection 覆盖）
   datasource:
@@ -20,6 +29,8 @@ spring:
     redis:
       host: ${CS_REDIS_HOST:localhost}
       port: ${CS_REDIS_PORT:6379}
+      # 密码不在此占位接线：空串会令 Redisson 对无鉴权实例发 AUTH 致连接失败——
+      # 有鉴权实例（ECS）经 Boot 原生环境绑定 SPRING_DATA_REDIS_PASSWORD 注入（未设即 null 不鉴权）
 
 cs:
   auth:
@@ -52,14 +63,6 @@ cs:
     limits:
       visitor-rpm: ${CS_LIMIT_VISITOR_RPM:20}
       visitor-rpd: ${CS_LIMIT_VISITOR_RPD:200}
-
-server:
-  # dev 缺省 8081；prod=8100（与知识服务 8090 同 ECS 共存，《02》§8/《13》§1，CS_SERVER_PORT 注入）
-  port: ${CS_SERVER_PORT:8081}
-  # 优雅停机（《13》§6）：在途轮排空（M0 整轮预算 60s + 缓冲）
-  shutdown: graceful
-
-spring.lifecycle.timeout-per-shutdown-phase: ${CS_SHUTDOWN_TIMEOUT:70s}
 
 management:
   endpoints:
