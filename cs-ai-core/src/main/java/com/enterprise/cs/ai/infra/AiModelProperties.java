@@ -8,9 +8,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * enabled=false（缺省）时 ai-core 不装配任何模型 Bean——echo 桩/无模型场景零依赖启动。
  */
 @ConfigurationProperties("cs.ai")
-public record AiModelProperties(
-        @DefaultValue("false") boolean enabled,
-        Tier t1) {
+public record AiModelProperties(@DefaultValue("false") boolean enabled, Tier t1) {
 
     /** T1 主对话载体（OpenAI 兼容端点；缺省智谱 GLM，与知识服务同源策略）。 */
     public record Tier(
@@ -19,7 +17,7 @@ public record AiModelProperties(
             @DefaultValue("glm-5.3-flash") String model,
             @DefaultValue("1.0") Double temperature,
             @DefaultValue("4096") Integer maxTokens,
-            /** 思考档位 low|high|max（GLM 思考不可关；缺省不传=服务端 max，首响 10s+，坑#30）——本平台默认 low。 */
+            /* 思考档位 low|high|max（GLM 思考不可关；缺省不传=服务端 max，首响 10s+，坑#30）——本平台默认 low。 */
             @DefaultValue("low") String reasoningEffort) {
     }
 }
