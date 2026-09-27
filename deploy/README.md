@@ -41,6 +41,15 @@ psql "<管理员连接串>/cs_agent" -f deploy/db/bootstrap-roles.sql
 （非 superuser）连接时受 FORCE RLS 约束，租户 GUC 由应用每事务注入（TenantContext→set_config），
 无需人工干预。
 
+**以应用账号直查数据的口径（RLS fail-closed，2026-09-27 E2E 实证）**：应用账号（表 owner、非
+superuser）直连查询时无租户 GUC → FORCE RLS 过滤为 0 行且不报错（设计行为）；管理员（superuser）
+旁路 RLS 看全量。用应用账号排查须先注入 GUC（租户值 = `CS_WEBCHAT_TENANT`）：
+
+```sql
+SELECT set_config('cs.tenant_id', '<CS_WEBCHAT_TENANT 值>', false);   -- 会话级
+SELECT * FROM cs_turn ORDER BY created_at DESC LIMIT 3;
+```
+
 ## 1. 构建（宿主侧，ECS 上执行）
 
 ```bash
