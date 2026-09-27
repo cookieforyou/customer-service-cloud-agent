@@ -13,6 +13,8 @@ import com.enterprise.cs.conversation.domain.SessionEventRepository;
 import com.enterprise.cs.conversation.domain.SessionRepository;
 import com.enterprise.cs.conversation.domain.Turn;
 import com.enterprise.cs.conversation.domain.TurnRepository;
+import io.opentelemetry.api.trace.Span;
+import jakarta.persistence.EntityManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,11 +39,11 @@ public class ConversationService implements ConversationPort {
     private final MessageRepository messages;
     private final TurnRepository turns;
     private final SessionEventRepository events;
-    private final jakarta.persistence.EntityManager em;
+    private final EntityManager em;
 
     public ConversationService(SessionRepository sessions, MessageRepository messages,
                                TurnRepository turns, SessionEventRepository events,
-                               jakarta.persistence.EntityManager em) {
+                               EntityManager em) {
         this.sessions = sessions;
         this.messages = messages;
         this.turns = turns;
@@ -185,7 +187,7 @@ public class ConversationService implements ConversationPort {
 
     /** 事件 trace_id 回填（M0批5，《10》§2）：调用线程的当前 span（chat.turn Observation 同线程直达）；无 span 为 null。 */
     private static String currentTraceId() {
-        io.opentelemetry.api.trace.SpanContext ctx = io.opentelemetry.api.trace.Span.current().getSpanContext();
+        var ctx = Span.current().getSpanContext();
         return ctx.isValid() ? ctx.getTraceId() : null;
     }
 }

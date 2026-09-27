@@ -1,5 +1,7 @@
 package com.enterprise.cs.orchestration.app;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.enterprise.cs.ai.api.ModelTier;
 import com.enterprise.cs.ai.api.RoutingChatModel;
 import com.enterprise.cs.commons.constant.ErrorCodes;
@@ -87,8 +89,8 @@ class SupervisorTurnEngineTest {
                 ModelTier.T1_PRIMARY);
     }
 
-    static <T> org.springframework.beans.factory.ObjectProvider<T> provider(T value) {
-        return new org.springframework.beans.factory.ObjectProvider<>() {
+    static <T> ObjectProvider<T> provider(T value) {
+        return new ObjectProvider<>() {
             @Override
             public T getObject() {
                 throw new IllegalStateException("单测 provider 仅支持 getIfAvailable");

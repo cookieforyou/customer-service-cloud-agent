@@ -1,6 +1,8 @@
 package com.enterprise.cs.channel.infra;
 
 import com.enterprise.cs.channel.api.ChatTurnPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class EchoTurnEngineConfig {
 
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(EchoTurnEngineConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(EchoTurnEngineConfig.class);
 
     @Bean
     @ConditionalOnProperty(name = "cs.channel.turn-engine", havingValue = "echo", matchIfMissing = true)

@@ -8,6 +8,12 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import com.enterprise.cs.conversation.api.ConversationPort;
+import org.springframework.jdbc.core.JdbcTemplate;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Mac;
+import java.security.Key;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +64,7 @@ class ChatFlowIntegrationTest {
     private static final String CASDOOR_ISSUER = "urn:test:casdoor";
 
     @Container
-    @org.springframework.boot.testcontainers.service.connection.ServiceConnection
+    @ServiceConnection
     static final PostgreSQLContainer POSTGRES =
             new PostgreSQLContainer(DockerImageName.parse("pgvector/pgvector:pg17"));
 
@@ -91,10 +97,10 @@ class ChatFlowIntegrationTest {
     RedissonClient redisson;
 
     @Autowired
-    com.enterprise.cs.conversation.api.ConversationPort conversation;
+    ConversationPort conversation;
 
     @Autowired
-    org.springframework.jdbc.core.JdbcTemplate jdbc;
+    JdbcTemplate jdbc;
 
     WebClient client() {
         if (web == null) {
@@ -305,8 +311,8 @@ class ChatFlowIntegrationTest {
 
     private static String hmac(String appKey, long ts) {
         try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            mac.init(new javax.crypto.spec.SecretKeySpec(
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(
                     APP_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] raw = mac.doFinal((appKey + "\n" + ts).getBytes(StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder();
@@ -319,7 +325,7 @@ class ChatFlowIntegrationTest {
         }
     }
 
-    static String pem(java.security.Key key, String type) {
+    static String pem(Key key, String type) {
         String b64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(key.getEncoded());
         return "-----BEGIN " + type + "-----\n" + b64 + "\n-----END " + type + "-----\n";
     }

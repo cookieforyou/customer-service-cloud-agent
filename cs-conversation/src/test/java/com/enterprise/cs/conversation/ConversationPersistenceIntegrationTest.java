@@ -1,5 +1,7 @@
 package com.enterprise.cs.conversation;
 
+import com.enterprise.cs.commons.context.TenantContext;
+import com.enterprise.cs.conversation.api.ConversationPort;
 import com.enterprise.cs.conversation.domain.Message;
 import com.enterprise.cs.conversation.domain.MessageRepository;
 import com.enterprise.cs.conversation.domain.Session;
@@ -10,8 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
@@ -67,7 +71,7 @@ class ConversationPersistenceIntegrationTest {
     private SessionEventRepository events;
 
     @Autowired
-    private com.enterprise.cs.conversation.api.ConversationPort conversation;
+    private ConversationPort conversation;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -106,7 +110,7 @@ class ConversationPersistenceIntegrationTest {
                 "退款怎么办理", "t-a", "webchat", "c-turn-1", Instant.now()));
 
         UUID turnId = UUID.randomUUID();
-        conversation.startTurn(new com.enterprise.cs.conversation.api.ConversationPort.StartTurnCmd(
+        conversation.startTurn(new ConversationPort.StartTurnCmd(
                 sessionId, turnId, inboundId, "T1", "{\"decision\":\"direct\",\"tier\":\"T1\"}"));
 
         assertThat(turns.findById(turnId)).hasValueSatisfying(t -> {
@@ -117,7 +121,7 @@ class ConversationPersistenceIntegrationTest {
         });
         assertThat(messages.findById(inboundId)).hasValueSatisfying(m -> assertThat(m.getTurnId()).isEqualTo(turnId));
 
-        UUID aiId = conversation.finishTurn(new com.enterprise.cs.conversation.api.ConversationPort.FinishTurnCmd(
+        UUID aiId = conversation.finishTurn(new ConversationPort.FinishTurnCmd(
                 turnId, "COMPLETED", 11, 7, 12, "退款会在1-3个工作日原路退回"));
 
         assertThat(turns.findById(turnId)).hasValueSatisfying(t -> {
@@ -204,7 +208,7 @@ class ConversationPersistenceIntegrationTest {
         });
 
         // 置租户上下文：服务事务内 set_config 注入 GUC——同租户行可见
-        com.enterprise.cs.commons.context.TenantContext.set("t-a");
+        TenantContext.set("t-a");
         try {
             inTx((con, st) -> {
                 st.execute("SET ROLE cs_app");
@@ -217,7 +221,7 @@ class ConversationPersistenceIntegrationTest {
                 return null;
             });
         } finally {
-            com.enterprise.cs.commons.context.TenantContext.clear();
+            TenantContext.clear();
         }
     }
 
@@ -248,12 +252,12 @@ class ConversationPersistenceIntegrationTest {
                 } catch (RuntimeException e) {
                     failure.set(e);
                 } catch (SQLException e) {
-                    failure.set(new org.springframework.jdbc.UncategorizedSQLException("rls work", null, e));
+                    failure.set(new UncategorizedSQLException("rls work", null, e));
                 } finally {
                     resetRoleQuietly(st);
                 }
             } catch (SQLException e) {
-                failure.compareAndSet(null, new org.springframework.jdbc.UncategorizedSQLException("rls setup", null, e));
+                failure.compareAndSet(null, new UncategorizedSQLException("rls setup", null, e));
             } finally {
                 DataSourceUtils.releaseConnection(con, dataSource());
             }
@@ -265,7 +269,7 @@ class ConversationPersistenceIntegrationTest {
     }
 
     private javax.sql.DataSource dataSource() {
-        return ((org.springframework.orm.jpa.JpaTransactionManager) txManager).getDataSource();
+        return ((JpaTransactionManager) txManager).getDataSource();
     }
     private static void resetRoleQuietly(Statement st) {
         try {

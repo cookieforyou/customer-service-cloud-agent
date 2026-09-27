@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -112,7 +113,7 @@ public class ChatService {
         try {
             appended = conversation.appendInbound(new ConversationPort.AppendInboundCmd(
                     sessionId, claims.tenantId(), CHANNEL, request.channelMsgId(), request.text()));
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             UUID existingId = conversation.inboundMessageId(claims.tenantId(), CHANNEL, request.channelMsgId())
                     .orElseThrow(() -> e);
             return new SendMessageView(null, existingId, true);

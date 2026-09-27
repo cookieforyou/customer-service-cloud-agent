@@ -2,6 +2,13 @@ package com.enterprise.cs;
 
 import com.enterprise.cs.ai.api.RoutingChatModel;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Mac;
+import java.security.Key;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -60,7 +67,7 @@ class OrchestrationChatFlowIntegrationTest {
     private static final String TENANT = "demo-tenant";
 
     @Container
-    @org.springframework.boot.testcontainers.service.connection.ServiceConnection
+    @ServiceConnection
     static final PostgreSQLContainer POSTGRES =
             new PostgreSQLContainer(DockerImageName.parse("pgvector/pgvector:pg17"));
 
@@ -249,9 +256,9 @@ class OrchestrationChatFlowIntegrationTest {
      */
     private List<ServerSentEvent<String>> framesOf(String token, UUID sessionId, long afterId,
                                                    Runnable trigger) throws Exception {
-        java.util.concurrent.CompletableFuture<List<ServerSentEvent<String>>> collected =
-                new java.util.concurrent.CompletableFuture<>();
-        java.util.concurrent.atomic.AtomicBoolean finished = new java.util.concurrent.atomic.AtomicBoolean();
+        CompletableFuture<List<ServerSentEvent<String>>> collected =
+                new CompletableFuture<>();
+        AtomicBoolean finished = new AtomicBoolean();
         Thread collector = new Thread(() -> {
             try {
                 List<ServerSentEvent<String>> frames = client().get()
@@ -277,7 +284,7 @@ class OrchestrationChatFlowIntegrationTest {
         collector.start();
         Thread.sleep(300);
         trigger.run();
-        return collected.get(25, java.util.concurrent.TimeUnit.SECONDS);
+        return collected.get(25, TimeUnit.SECONDS);
     }
 
     private void send(String token, UUID sessionId, String text, String channelMsgId) {
@@ -379,8 +386,8 @@ class OrchestrationChatFlowIntegrationTest {
 
     private static String hmac(String appKey, long ts) {
         try {
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            mac.init(new javax.crypto.spec.SecretKeySpec(
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(
                     APP_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             byte[] raw = mac.doFinal((appKey + "\n" + ts).getBytes(StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder();
@@ -404,7 +411,7 @@ class OrchestrationChatFlowIntegrationTest {
                 .build();
     }
 
-    static String pem(java.security.Key key, String type) {
+    static String pem(Key key, String type) {
         String b64 = Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(key.getEncoded());
         return "-----BEGIN " + type + "-----\n" + b64 + "\n-----END " + type + "-----\n";
     }

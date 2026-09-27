@@ -6,6 +6,7 @@ import com.enterprise.cs.commons.exception.BusinessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -40,9 +41,9 @@ public class GlobalExceptionHandler {
      * 静态资源/路径未命中（坑#28）：Spring 7 静态链路抛 NoResourceFoundException——
      * 映射 404，不得落入兜底 500（兜底会污染启动/路由类故障判读）。
      */
-    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResponse<Void>> noResource(
-            org.springframework.web.servlet.resource.NoResourceFoundException e) {
+            NoResourceFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ErrorCodes.NOT_FOUND, "资源不存在: " + e.getResourcePath()));
     }

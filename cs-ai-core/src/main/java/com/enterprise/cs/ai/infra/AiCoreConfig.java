@@ -3,6 +3,8 @@ package com.enterprise.cs.ai.infra;
 import com.enterprise.cs.ai.api.ModelTier;
 import com.enterprise.cs.ai.api.RoutingChatModel;
 import io.micrometer.observation.ObservationRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
@@ -25,8 +27,7 @@ import java.util.Map;
 @Configuration
 public class AiCoreConfig {
 
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(AiCoreConfig.class);
+    private static final Logger log = LoggerFactory.getLogger(AiCoreConfig.class);
 
     public static final String BEAN_T1_PRIMARY = "t1PrimaryChatModel";
 

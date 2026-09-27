@@ -2,6 +2,7 @@ package com.enterprise.cs.channel.infra;
 
 import com.enterprise.cs.commons.constant.CsConstants;
 import com.enterprise.cs.commons.context.TenantContext;
+import com.enterprise.cs.channel.api.FrameSink;
 import com.enterprise.cs.conversation.api.ConversationPort;
 import com.enterprise.cs.channel.api.ChatTurnPort;
 import com.enterprise.cs.orchestration.api.SupervisorTurnPort;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
 
 /**
  * 轮次引擎切换装配（《08》§3）：cs.channel.turn-engine=orchestration 时以 supervisor 引擎
@@ -54,7 +57,7 @@ public class OrchestrationTurnEngineConfig {
 
     private void runTurn(SupervisorTurnPort supervisor, ConversationPort conversation,
                          ChatTurnMetrics metrics, ChatTurnPort.TurnCommand command,
-                         com.enterprise.cs.channel.api.FrameSink sink) throws Exception {
+                         FrameSink sink) throws Exception {
         // 轮次执行线程（虚拟线程）自持租户上下文——《12》§2.2 RLS GUC 注入（坑#25）：
         // 覆盖本线程内全部持久层触达（startTurn/finishTurn + SessionMemoryAdvisor 窗口读）
         TenantContext.set(command.tenantId());
@@ -81,7 +84,7 @@ public class OrchestrationTurnEngineConfig {
                                 command.turnId(), CsConstants.TURN_STATE_COMPLETED,
                                 tokensIn, tokensOut, latencyMs, answer.toString()));
                         metrics.turnFinished(CsConstants.TURN_STATE_COMPLETED, latencyMs != null ? latencyMs
-                                : java.time.Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
+                                : Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
                         sink.done();
                     }
 
@@ -95,7 +98,7 @@ public class OrchestrationTurnEngineConfig {
                             log.warn("finishTurn(FAILED) 补偿失败: turnId={}", command.turnId(), e);
                         }
                         metrics.turnFinished(CsConstants.TURN_STATE_FAILED,
-                                java.time.Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
+                                Duration.ofNanos(System.nanoTime() - startedAt).toMillis());
                         sink.error(code, message);
                     }
                 });
