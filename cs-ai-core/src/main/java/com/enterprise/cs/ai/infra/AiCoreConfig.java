@@ -47,6 +47,10 @@ public class AiCoreConfig {
                 // 官方推荐采样参数（GLM-5.3-Flash temperature 1.0，姊妹实证）
                 .temperature(t1.temperature())
                 .maxTokens(t1.maxTokens())
+                // 思考档位显式透传（坑#30）：GLM 思考不可关、不传 effort=服务端默认 max——
+                // 思维链计入 completion_tokens（E2E 读数：633 out 约半数为思考），首响 10s+；
+                // 客服首响优先（《10》P95≤2s 目标）默认 low，质量敏感场景经 CS_AI_REASONING_EFFORT 调高
+                .reasoningEffort(t1.reasoningEffort())
                 // 流式末块携带 usage（智谱 OpenAI 兼容端点支持，姊妹实证）——轮次计量 tokens_in/out 依赖
                 .streamOptions(OpenAiChatOptions.StreamOptions.builder().includeUsage(true).build())
                 .build();
@@ -55,7 +59,7 @@ public class AiCoreConfig {
                 .observationRegistry(observationRegistry.getIfAvailable(() -> ObservationRegistry.NOOP))
                 .build();
         // 关键配置生效值日志（坑#11 纪律；不落 key）：启动即可判别模型装配形态
-        log.info("T1 主模型已装配: model={}, baseUrl={}", t1.model(), t1.baseUrl());
+        log.info("T1 主模型已装配: model={}, baseUrl={}, effort={}", t1.model(), t1.baseUrl(), t1.reasoningEffort());
         return model;
     }
 

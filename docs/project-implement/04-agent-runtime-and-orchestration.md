@@ -1,6 +1,6 @@
 # 04 · Agent 运行时与编排引擎
 
-> 版本 v1.1.0 ｜ 2026-09-20 ｜ M0批4：RoutingChatModel 骨架与 supervisor 最小链落地（Spring AI 2.0.1 实测装配形态）。依赖《01》D-03/D-04/D-06，《03》Advisor 链与上下文。
+> 版本 v1.2.0 ｜ 2026-09-27 ｜ E2E 定案：GLM 思考档位治理（默认 low）。v1.1.0 ｜ 2026-09-20 ｜ M0批4：RoutingChatModel 骨架与 supervisor 最小链落地（Spring AI 2.0.1 实测装配形态）。依赖《01》D-03/D-04/D-06，《03》Advisor 链与上下文。
 
 ## 1. Agent 抽象与注册表
 
@@ -130,3 +130,4 @@ Controller(MVC, 虚拟线程) 返回 Flux<ServerSentEvent<Frame>>
   ② **RoutingChatModel 骨架范围**：tier→载体映射 + `TierRoutingOptions` 解析缝 + 缺省 T1 直连；熔断/T2 回退/成本路由与 `cs_model_route_total` 计量 M1 接续。
   ③ **模块边界落位**（ArchUnit 白名单下）：orchestration 不依赖 conversation——轮次生命周期落库由 channel 侧适配器驱动（`OrchestrationTurnEngineConfig`：startTurn/finishTurn 经 ConversationPort），orchestration 经自有 `TurnFrames` 契约（token/completed/failed）回传增量与计量信号，保持纯 Agent 运行时；supervisor 系统提示为代码内形态（M1 移 PromptRepository）。
   ④ 模型经 `ObjectProvider` 惰性解析：`cs.ai.enabled=false`（缺省）时上下文照常装配（echo 桩/无模型测试），运行期未装配报 failed 帧。
+- v1.2.0（2026-09-27）：E2E-M0-1 定案——**T1 思考档位治理（坑#30）**：GLM-5.3-Flash 思考不可关（`thinking.type` 仅 enabled）且 `reasoning_effort` 不传 = 服务端默认 max——首响 10s+（E2E 读数：tokens_out=633 约半数为思维链、latency 19.3s）。T1 装配显式透传 `reasoningEffort`，配置 `CS_AI_REASONING_EFFORT`（low|high|max），**平台默认 low**（§5 首响目标 P95≤2s 优先；质量敏感场景调高）；生效值入启动日志。

@@ -52,6 +52,8 @@ cs:
       base-url: ${CS_AI_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
       api-key: ${CS_AI_API_KEY:}
       model: ${CS_AI_MODEL:glm-5.3-flash}
+      # 思考档位（坑#30）：GLM 思考不可关、不传=服务端 max（首响 10s+）；客服首响优先默认 low
+      reasoning-effort: ${CS_AI_REASONING_EFFORT:low}
   conversation:
     memory:
       window: ${CS_MEMORY_WINDOW:10}   # SessionMemoryAdvisor 窗口读拼（《03》§3.2 雏形）
